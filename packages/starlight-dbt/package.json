@@ -29,5 +29,8 @@
   "repository": {
     "type": "git",
     "url": "https://https://github.com/walter9388/starlight-dbt.git"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
