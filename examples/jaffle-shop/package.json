@@ -1,5 +1,5 @@
 {
-  "name": "jaffle-shop",
+  "name": "@example/jaffle-shop",
   "type": "module",
   "version": "0.0.1",
   "private": true,

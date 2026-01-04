@@ -1,0 +1,17 @@
+# Deep Directories
+**/node_modules
+
+# Generated Directories
+**/dist
+**/build
+**/.astro
+**/__coverage__
+
+# Directories
+.changeset
+
+# Files
+pnpm-lock.yaml
+
+# GitHub Actions workflow files
+.github/workflows/*.yml
