@@ -4,6 +4,9 @@
   "description": "A Starlight plugin for dbt docs integration",
   "author": "Alex Waldron <walter93@hotmail.co.uk> (https://github.com/walter9388)",
   "type": "module",
+  "scripts": {
+    "test": "vitest"
+  },
   "keywords": [
     "dbt",
     "dbt-docs",
@@ -23,7 +26,11 @@
     "@astrojs/starlight": ">=0.30.0"
   },
   "devDependencies": {
-    "typescript": "^5.3.0"
+    "typescript": "^5.3.0",
+    "vitest": "^4.0.16"
+  },
+  "dependencies": {
+    "@yu-iskw/dbt-artifacts-parser": "^0.1.4"
   },
   "license": "MIT",
   "repository": {
