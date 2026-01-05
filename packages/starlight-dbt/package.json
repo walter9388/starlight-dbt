@@ -30,7 +30,8 @@
     "vitest": "^4.0.16"
   },
   "dependencies": {
-    "@yu-iskw/dbt-artifacts-parser": "^0.1.4"
+    "@yu-iskw/dbt-artifacts-parser": "^0.1.4",
+    "deepmerge": "^4.3.1"
   },
   "license": "MIT",
   "repository": {

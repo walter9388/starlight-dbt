@@ -29,3 +29,6 @@ test-results/
 
 # exclude IntelliJ/WebStorm stuff
 .idea
+
+# vscode settings
+.vscode/settings.json
