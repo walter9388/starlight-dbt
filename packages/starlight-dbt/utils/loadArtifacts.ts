@@ -2,13 +2,7 @@ import path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { catalog, manifest } from '@yu-iskw/dbt-artifacts-parser/dist/';
 
-/**
- * Input accepted by artifact loaders.
- *
- * - A parsed JSON object
- * - A file path pointing to a JSON file
- */
-export type JsonInput = string | Record<string, unknown>;
+import type { JsonInput } from './types';
 
 /**
  * Loads a JSON object from either:
