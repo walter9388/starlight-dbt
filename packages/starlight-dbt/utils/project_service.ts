@@ -173,19 +173,19 @@ const loadProject = async function (
 	});
 
 	// Add semantic models back into nodes to make site logic work
-	Object.values(service.files.manifest.semantic_models).forEach((node) => {
+	Object.values(service.files.manifest.semantic_models ?? {}).forEach((node) => {
 		service.files.manifest.nodes[node.unique_id] = node;
 		node.label = node.name;
 	});
 
 	// Add saved queries back into nodes to make site logic work
-	Object.values(service.files.manifest.saved_queries).forEach((node) => {
+	Object.values(service.files.manifest.saved_queries ?? {}).forEach((node) => {
 		service.files.manifest.nodes[node.unique_id] = node;
 		node.label = node.name;
 	});
 
 	// Add unit tests into nodes
-	Object.values(service.files.manifest.unit_tests).forEach((node) => {
+	Object.values(service.files.manifest.unit_tests ?? {}).forEach((node) => {
 		service.files.manifest.nodes[node.unique_id] = node;
 		node.label = node.name;
 	});
@@ -198,7 +198,7 @@ const loadProject = async function (
 	const project = incorporate_catalog(
 		service.files.manifest as ManifestArtifact,
 		service.files.catalog
-	);
+	) as Project;
 
 	/* ---- model lookup by name ---- */
 	const models = Object.values(project.nodes);

@@ -2,7 +2,7 @@ import path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { catalog, manifest } from '@yu-iskw/dbt-artifacts-parser/dist/';
 
-import type { JsonInput } from './types';
+import type { JsonInput, ManifestArtifact } from './types';
 
 /**
  * Loads a JSON object from either:
@@ -46,9 +46,27 @@ async function loadJson(input: JsonInput, label: string): Promise<Record<string,
  * @returns Parsed manifest v12 object
  * @throws If the manifest is not v12 or cannot be parsed
  */
-export async function loadManifestV12(input: JsonInput) {
-	const json = await loadJson(input, 'manifest');
-	return manifest.parseManifestV12(json);
+export async function loadManifestV12(input: JsonInput): Promise<ManifestArtifact> {
+	const json = (await loadJson(input, 'manifest')) as any;
+
+	const version = json.metadata?.dbt_schema_version;
+
+	if (!version) {
+		throw new Error('Manifest is missing metadata.dbt_schema_version');
+	}
+
+	switch (version) {
+		case 'https://schemas.getdbt.com/dbt/manifest/v9.json':
+			return manifest.parseManifestV9(json);
+		case 'https://schemas.getdbt.com/dbt/manifest/v10.json':
+			return manifest.parseManifestV10(json);
+		case 'https://schemas.getdbt.com/dbt/manifest/v11.json':
+			return manifest.parseManifestV11(json);
+		case 'https://schemas.getdbt.com/dbt/manifest/v12.json':
+			return manifest.parseManifestV12(json);
+		default:
+			throw new Error(`Unsupported manifest version: ${version}. Only v9-v12 supported.`);
+	}
 }
 
 /**

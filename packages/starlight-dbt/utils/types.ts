@@ -1,4 +1,4 @@
-import type { WritableManifest } from '@yu-iskw/dbt-artifacts-parser/dist/manifest';
+import type { ManifestV9 , ManifestV10 , ManifestV11 , WritableManifest } from '@yu-iskw/dbt-artifacts-parser/dist/manifest';
 import type { CatalogArtifactV1 } from '@yu-iskw/dbt-artifacts-parser/dist/catalog';
 
 /**
@@ -32,15 +32,16 @@ export interface TestInfo {
 	fk_model?: unknown;
 }
 
-export type ManifestArtifact = WritableManifest;
+export type ManifestArtifact = ManifestV9 | ManifestV10 | ManifestV11 | WritableManifest;
 export type ManifestMetadata = ManifestArtifact['metadata'];
 export type ManifestNode = ManifestArtifact['nodes'][string] & { label?: string };
 type ManifestSource = ManifestArtifact['sources'][string] & { label?: string };
-type ManifestExposure = ManifestArtifact['exposures'][string];
-type ManifestMetric = ManifestArtifact['metrics'][string];
-type ManifestSemanticModel = ManifestArtifact['semantic_models'][string];
-type ManifestSavedQuery = ManifestArtifact['saved_queries'][string];
-type ManifestUnitTest = ManifestArtifact['unit_tests'][string] & { label?: string };
+type ManifestExposure = ManifestArtifact['exposures'][string]& { label?: string };
+type ManifestMetric = ManifestArtifact['metrics'][string]& { label?: string };
+type PickWithProp<T, K extends keyof any> = Extract<T, Record<K, any>>[K][string] & { label?: string | null};
+type ManifestSemanticModel = PickWithProp<ManifestArtifact, 'semantic_models'>;
+type ManifestSavedQuery = PickWithProp<ManifestArtifact, 'saved_queries'>;
+type ManifestUnitTest = PickWithProp<ManifestArtifact, 'unit_tests'>;
 type ManifestMacros = ManifestArtifact['macros'];
 export type AugmentedMacro = ManifestMacros[string] & {
 	impls?: Record<string, string>;
@@ -77,7 +78,9 @@ export type AugmentedManifestArtifact = Omit<ManifestArtifact, 'nodes'> & {
 		| ManifestUnitTest
 	>;
 	sources: Record<string, ManifestSource>;
-	unit_tests: Record<string, ManifestUnitTest>;
+  semantic_models?: Record<string, ManifestSemanticModel>;
+  saved_queries?: Record<string, ManifestSavedQuery>;
+	unit_tests?: Record<string, ManifestUnitTest>;
 };
 
 export type CatalogArtifact = CatalogArtifactV1;
