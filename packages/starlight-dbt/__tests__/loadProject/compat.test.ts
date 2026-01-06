@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 
-import { getQuoteChar } from './compat';
+import { getQuoteChar } from '../../utils/load/compat';
 
 const BACKTICK = '`';
 const QUOTE = '"';
