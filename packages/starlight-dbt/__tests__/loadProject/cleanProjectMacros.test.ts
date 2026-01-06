@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { consolidateAdapterMacros } from '../../utils/load/cleanProjectMacros';
+import { consolidateAdapterMacros, cleanProjectMacros } from '../../utils/load/cleanProjectMacros';
 
 describe('consolidateAdapterMacros', () => {
 	it('groups adapter implementations under the base adapter macro', () => {
@@ -68,5 +68,59 @@ describe('consolidateAdapterMacros', () => {
 		expect(other_macro).toBeDefined();
 		expect(!!other_macro!.is_adapter_macro).toBe(false);
 		expect(!!other_macro!.is_adapter_macro_impl).toBe(false);
+	});
+});
+
+describe('cleanProjectMacros', () => {
+	it('groups, filters, consolidates macros and keys by unique_id', () => {
+		const macros: any = {
+			my_macro: {
+				name: 'my_macro',
+				unique_id: 'macro.pkg.my_macro',
+				macro_sql: "{{ adapter_macro('something') }} ",
+				package_name: 'pkg',
+			},
+			postgres__my_macro: {
+				name: 'postgres__my_macro',
+				unique_id: 'macro.pkg.postgres__my_macro',
+				macro_sql: 'SELECT 1',
+				package_name: 'pkg',
+			},
+			other_macro: {
+				name: 'other_macro',
+				unique_id: 'macro.otherpkg.other_macro',
+				macro_sql: 'SELECT 2',
+				package_name: 'otherpkg',
+			},
+			dbt_only: {
+				name: 'dbt_only',
+				unique_id: 'macro.dbt.dbt_only',
+				macro_sql: 'SELECT 3',
+				package_name: 'dbt',
+			},
+			dbtpg_macro: {
+				name: 'dbtpg_macro',
+				unique_id: 'macro.dbt_postgres.dbtpg_macro',
+				macro_sql: 'SELECT 4',
+				package_name: 'dbt_postgres',
+			},
+		};
+
+		const result = cleanProjectMacros(macros, 'postgres');
+
+		// Keys should be unique_id based and include pkg/otherpkg but not dbt packages
+		expect(Object.keys(result)).toEqual(
+			expect.arrayContaining(['macro.pkg.my_macro', 'macro.otherpkg.other_macro'])
+		);
+		expect(result['macro.dbt.dbt_only']).toBeUndefined();
+		expect(result['macro.dbt_postgres.dbtpg_macro']).toBeUndefined();
+
+		// Check consolidation for adapter macro
+		const consolidated = result['macro.pkg.my_macro'];
+		expect(consolidated).toBeDefined();
+		expect(!!consolidated!.is_adapter_macro).toBe(true);
+		expect(consolidated!.impls).toBeDefined();
+		expect(consolidated!.impls!['Adapter Macro']).toBe(macros.my_macro.macro_sql);
+		expect(consolidated!.impls!['postgres']).toBe(macros.postgres__my_macro.macro_sql);
 	});
 });
