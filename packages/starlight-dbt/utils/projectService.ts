@@ -1,5 +1,5 @@
 // adapted from https://github.com/dbt-labs/dbt-docs/blob/e03a7912f50d0ceb770fb77b99a059d57f810a9c/src/app/services/project_service.js
-import { loadProject } from './loadProject';
+import { loadProject } from './load/loadProject';
 
 import type {
 	AugmentedCatalogArtifact,
@@ -8,7 +8,7 @@ import type {
 	JsonInput,
 	ManifestArtifact,
 	ProjectService,
-} from './types';
+} from './load/types';
 
 export function createProjectService(manifestInput: JsonInput, catalogInput: JsonInput) {
 	const service: ProjectService = {

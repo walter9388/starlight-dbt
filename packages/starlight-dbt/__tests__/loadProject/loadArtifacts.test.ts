@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { loadManifestV12, loadCatalogV1 } from './loadArtifacts';
+import { loadManifestV12, loadCatalogV1 } from '../../utils/load/loadArtifacts';
 
 describe('loadManifestV12', () => {
 	it('parses a valid manifest v12', async () => {
