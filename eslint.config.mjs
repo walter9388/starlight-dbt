@@ -3,11 +3,14 @@
 // @ts-check
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
 import eslint from '@eslint/js';
-import tseslint from 'typescript-eslint';
 import { globalIgnores } from 'eslint/config';
-import globals from 'globals';
 import prettierConfig from 'eslint-config-prettier';
+import importPlugin from 'eslint-plugin-import';
+import unusedImports from 'eslint-plugin-unused-imports';
+import globals from 'globals';
+import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
 	// Ignore hidden files and directories, `*.d.ts` files (as most recommendations are mostly for
@@ -56,6 +59,10 @@ export default tseslint.config(
 
 	// Tweak some rules in all files.
 	{
+		plugins: {
+			import: importPlugin,
+			'unused-imports': unusedImports,
+		},
 		rules: {
 			// Allow triple-slash references that we heavily use.
 			'@typescript-eslint/triple-slash-reference': 'off',
@@ -64,17 +71,6 @@ export default tseslint.config(
 			'@typescript-eslint/unbound-method': 'off',
 			// Allow empty catch blocks.
 			'no-empty': ['error', { allowEmptyCatch: true }],
-			// Allow unused variables for sibling properties in destructuring (used to omit properties)
-			// or starting with `_`.
-			'@typescript-eslint/no-unused-vars': [
-				'error',
-				{
-					ignoreRestSiblings: true,
-					destructuredArrayIgnorePattern: '^_',
-					varsIgnorePattern: '^_',
-					argsIgnorePattern: '^_',
-				},
-			],
 			// Allow using `any` in rest parameter arrays, e.g. `(...args: any[]) => void`.
 			'@typescript-eslint/no-explicit-any': ['error', { ignoreRestArgs: true }],
 			// Allow duplicated types in unions as it's not an error and the extra verbosity can make it
@@ -84,6 +80,38 @@ export default tseslint.config(
 			// fallbacks for some types that may not be accessible in some user environments, e.g. i18n
 			// keys for plugins.
 			'@typescript-eslint/no-redundant-type-constituents': 'off',
+
+			// Remove unused imports entirely
+			'unused-imports/no-unused-imports': 'error',
+			// Allow unused variables for sibling properties in destructuring (used to omit properties)
+			// or starting with `_`.
+			'@typescript-eslint/no-unused-vars': 'off',
+			// (Replace TS unused-vars with unused-imports version)
+			'unused-imports/no-unused-vars': [
+				'warn',
+				{
+					vars: 'all',
+					varsIgnorePattern: '^_',
+					args: 'after-used',
+					argsIgnorePattern: '^_',
+				},
+			],
+			// Sort imports
+			'import/order': [
+				'error',
+				{
+					groups: [
+						'builtin',
+						'external',
+						'internal',
+						['parent', 'sibling', 'index'],
+						'object',
+						'type',
+					],
+					'newlines-between': 'always',
+					alphabetize: { order: 'asc', caseInsensitive: true },
+				},
+			],
 		},
 	}
 );

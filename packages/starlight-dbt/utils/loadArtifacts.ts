@@ -1,5 +1,6 @@
-import path from 'node:path';
 import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+
 import { catalog, manifest } from '@yu-iskw/dbt-artifacts-parser/dist/';
 
 import type { JsonInput } from './types';

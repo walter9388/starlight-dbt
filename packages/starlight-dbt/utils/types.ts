@@ -1,5 +1,5 @@
-import type { WritableManifest } from '@yu-iskw/dbt-artifacts-parser/dist/manifest';
 import type { CatalogArtifactV1 } from '@yu-iskw/dbt-artifacts-parser/dist/catalog';
+import type { WritableManifest } from '@yu-iskw/dbt-artifacts-parser/dist/manifest';
 
 /**
  * Input accepted by artifact loaders.
