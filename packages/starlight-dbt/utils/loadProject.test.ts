@@ -2,8 +2,116 @@ import path from 'node:path';
 
 import { describe, it, expect } from 'vitest';
 
-import { consolidateAdapterMacros, loadProject } from './loadProject';
+import { consolidateAdapterMacros, match_dict_keys, incorporate_catalog } from './loadProject';
 import { createProjectService } from './project_service';
+
+import type { ManifestArtifact, CatalogArtifact } from './types';
+
+
+const testManifest: ManifestArtifact = {
+	metadata: {},
+	nodes: {
+		node1: {
+			database: 'test',
+			schema: 'stg',
+			name: 'node1',
+			resource_type: 'model',
+			package_name: 'test',
+			path: '',
+			original_file_path: '',
+			unique_id: 'node1',
+			fqn: ['test', 'node1', 'v1'],
+			alias: 'node1_alias',
+			checksum: {
+				name: 'sha256',
+				checksum: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+			},
+			config: {},
+			columns: {
+				id: { name: 'id', info: 1 },
+				NAME: { name: 'NAME', info: 2 },
+			},
+		},
+	},
+	sources: {},
+	macros: {},
+	exposures: {},
+	metrics: {},
+	groups: {},
+	semantic_models: {},
+	saved_queries: {},
+	unit_tests: {},
+	selectors: {},
+	disabled: {},
+	parent_map: {},
+	child_map: {},
+	group_map: {},
+	docs: {},
+};
+
+const testCatalog: CatalogArtifact = {
+	metadata: {},
+	sources: {
+		source1: {
+			metadata: {
+				type: 'BASE TABLE',
+				schema: 'stg',
+				name: 'source1',
+			},
+			columns: {
+				field_1: { type: 'TEXT', index: 1, name: 'field_1' },
+			},
+			stats: {},
+			unique_id: 'source1',
+		},
+	},
+	nodes: {
+		node1: {
+			metadata: {
+				type: 'BASE TABLE',
+				schema: 'stg',
+				name: 'node1',
+			},
+			columns: {
+				ID: { type: 'TEXT', index: 1, name: 'ID' },
+				name: { type: 'TEXT', index: 2, name: 'name' },
+			},
+			stats: {},
+		},
+	},
+};
+
+
+describe('match_dict_keys', () => {
+	it('maps keys case-insensitively to destination keys and preserves unmatched keys', () => {
+		const dest = ['ID', 'Name'];
+		const src = { id: 1, NAME: 'alice', extra: true };
+
+		const out = match_dict_keys(dest, src as any);
+
+		expect(out.ID).toBe(1);
+		expect(out.Name).toBe('alice');
+		expect(out.extra).toBe(true);
+	});
+});
+
+describe('incorporate_catalog', () => {
+	it('copies sources into nodes and remaps column keys to catalog column names', () => {
+		const merged = incorporate_catalog(testManifest, testCatalog);
+
+		// catalog sources should be copied into nodes
+		expect(merged.nodes.source1).toBeDefined();
+		expect(merged.nodes.source1!.metadata.name).toBe('source1');
+
+		const cols = merged.nodes.node1?.columns;
+		// original 'id' should map to 'ID' and index/info should both be there
+		expect(cols?.ID!.info).toBe(1);
+		expect(cols?.ID!.index).toBeDefined();
+		// original 'NAME' should map to 'name' and index/info should both be there
+		expect(cols?.name!.info).toBe(2);
+		expect(cols?.name!.index).toBeDefined();
+	});
+});
 
 describe('consolidateAdapterMacros', () => {
 	it('groups adapter implementations under the base adapter macro', () => {
@@ -67,8 +175,8 @@ describe('consolidateAdapterMacros', () => {
 		expect(my_macro_not_impls!.impls!['Adapter Macro']).toBe(macros.my_macro_not_impls.macro_sql);
 
 		// Check other_macro
-        const other_macro = result.find((m) => m.name === 'other_macro');
-        expect(other_macro).toBeDefined();
+		const other_macro = result.find((m) => m.name === 'other_macro');
+		expect(other_macro).toBeDefined();
 		expect(!!other_macro!.is_adapter_macro).toBe(false);
 		expect(!!other_macro!.is_adapter_macro_impl).toBe(false);
 	});
