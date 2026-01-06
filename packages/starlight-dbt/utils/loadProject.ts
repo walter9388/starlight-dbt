@@ -28,7 +28,7 @@ import type {
  * @param obj - Source object whose keys should be matched
  * @returns A new object with keys mapped to the matching keys from `dest_keys`
  */
-function match_dict_keys(dest_keys: string[], obj: any) {
+export function match_dict_keys(dest_keys: string[], obj: any) {
 	const new_obj: any = {};
 
 	Object.entries(obj).forEach(([key, value]) => {
@@ -54,7 +54,7 @@ function match_dict_keys(dest_keys: string[], obj: any) {
  * @param catalog - Parsed catalog artifact (v1)
  * @returns The merged project object combining catalog and manifest
  */
-function incorporate_catalog(manifest: ManifestArtifact, catalog: CatalogArtifact) {
+export function incorporate_catalog(manifest: ManifestArtifact, catalog: CatalogArtifact) {
 	// Re-combine sources and nodes
 	Object.entries(catalog.sources).forEach(([source_id, source]) => {
 		catalog.nodes[source_id] = source;

@@ -18,5 +18,5 @@ test('column quoting', () => {
 test('column quoting with invalid adapter', () => {
 	expect(getQuoteChar({ adapter_type: null })).toStrictEqual(QUOTE);
 	expect(getQuoteChar({})).toStrictEqual(QUOTE);
-	expect(getQuoteChar(null)).toStrictEqual(QUOTE);
+	expect(getQuoteChar(null as any)).toStrictEqual(QUOTE);
 });
