@@ -1,5 +1,7 @@
 import path from 'node:path';
+
 import { describe, it, expect } from 'vitest';
+
 import { createProjectService } from './utils/project_service';
 
 describe('Project service', () => {

@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+
 import { loadManifestV12, loadCatalogV1 } from './loadArtifacts';
 
 describe('loadManifestV12', () => {
