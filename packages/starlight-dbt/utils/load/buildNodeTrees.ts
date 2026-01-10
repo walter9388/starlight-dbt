@@ -104,6 +104,20 @@ export function buildExposureTree(nodes: ExposureValues[], select?: string): Tre
 		}));
 }
 
+/**
+ * Build a hierarchical tree of metrics grouped by `package_name`.
+ *
+ * - Groups metric nodes under a folder per `package_name`.
+ * - Each folder is a `TreeItem` with `items` containing file `TreeItem`s for
+ *   each metric (uses `label` if present, otherwise `name`).
+ * - Marks the folder `active` if any child matches `select` and marks the
+ *   child file `active` when its `unique_id` equals `select`.
+ * - File items include `node`, `unique_id`, and `node_type: 'metric'`.
+ *
+ * @param nodes - Array of metric nodes from the project manifest
+ * @param select - Optional unique_id to mark a node (and its parent) active
+ * @returns Array of `TreeItem` folders sorted by name, each containing sorted items
+ */
 export function buildMetricTree(nodes: MetricValues[], select?: string): TreeItem[] {
 	const metrics: Record<string, TreeItem> = {};
 

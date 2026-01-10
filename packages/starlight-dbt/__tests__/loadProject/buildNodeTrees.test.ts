@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { buildExposureTree } from '../../utils/load/buildNodeTrees';
+import { buildExposureTree, buildMetricTree } from '../../utils/load/buildNodeTrees';
 
 describe('buildExposureTree', () => {
 	it('groups exposures by type, sorts and marks active selection', () => {
@@ -29,5 +29,43 @@ describe('buildExposureTree', () => {
 		const uncategorized = tree.find((t) => t.name === 'Uncategorized')!;
 		expect(uncategorized.items).toHaveLength(1);
 		expect(uncategorized.items![0]!.name).toBe('exp_d');
+	});
+});
+
+describe('buildMetricTree', () => {
+	it('groups metrics by package_name, sorts and marks active selection', () => {
+		const nodes: any[] = [
+			{
+				name: 'metric_a',
+				label: 'Metric A',
+				package_name: 'pkg1',
+				unique_id: 'metric.pkg1.metric_a',
+			},
+			{
+				name: 'metric_b',
+				label: 'Metric B',
+				package_name: 'pkg2',
+				unique_id: 'metric.pkg2.metric_b',
+			},
+			{ name: 'metric_c', package_name: 'pkg1', unique_id: 'metric.pkg1.metric_c' },
+		];
+
+		const tree = buildMetricTree(nodes, 'metric.pkg1.metric_c');
+
+		// Should create folders for pkg1 and pkg2
+		expect(tree.map((t) => t.name)).toEqual(expect.arrayContaining(['pkg1', 'pkg2']));
+
+		const pkg1 = tree.find((t) => t.name === 'pkg1')!;
+		expect(pkg1).toBeDefined();
+		expect(pkg1.active).toBe(true); // metric_c is selected
+		expect(pkg1.items).toHaveLength(2);
+		expect( pkg1.items?.find((t) => t.name === 'metric_c')!.active).toBe(true);
+
+		const itemNames = (pkg1.items as any[]).map((i) => i.name);
+		expect(itemNames).toEqual(['Metric A', 'metric_c']); // sorted, metric_a uses label
+
+		const pkg2 = tree.find((t) => t.name === 'pkg2')!;
+		expect(pkg2.active).toBe(false);
+		expect(pkg2.items![0]!.active).toBe(false);
 	});
 });

@@ -106,3 +106,22 @@ export interface ProjectService {
 	loaded: boolean;
 	init: () => Promise<void>;
 }
+
+type TreeItemType = 'folder' | 'file' | 'database' | 'schema' | 'table' | 'group';
+
+export interface TreeItem {
+	type: TreeItemType;
+	name: string;
+	active: boolean;
+	items?: TreeItem[]; // | Record<string, TreeItem>;
+	node?: any;
+	unique_id?: string;
+	node_type?: string;
+}
+
+type ValueOf<T> = T[keyof T];
+export type SourceValues = ValueOf<Project['sources']>;
+export type ExposureValues = ValueOf<Project['exposures']>;
+export type MetricValues = ValueOf<Project['nodes']>;
+export type SemanticModelValues = ValueOf<Project['nodes']>;
+export type SavedQueryValues = ValueOf<Project['nodes']>;
