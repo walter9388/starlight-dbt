@@ -204,6 +204,20 @@ export function buildSemanticModelTree(nodes: SemanticModelValues[], select?: st
 		}));
 }
 
+/**
+ * Build a hierarchical tree of saved queries grouped by `package_name`.
+ *
+ * - Groups saved query nodes under a folder per `package_name`.
+ * - Each folder is a `TreeItem` with `items` containing file `TreeItem`s for
+ *   each saved query (uses the node's `name`).
+ * - Marks the folder `active` if any child matches `select` and marks the
+ *   child file `active` when its `unique_id` equals `select`.
+ * - File items include `node`, `unique_id`, and `node_type: 'saved_query'`.
+ *
+ * @param nodes - Array of saved query nodes from the project manifest
+ * @param select - Optional unique_id to mark a node (and its parent) active
+ * @returns Array of `TreeItem` folders sorted by name, each containing sorted items
+ */
 export function buildSavedQueryTree(nodes: SavedQueryValues[], select?: string): TreeItem[] {
 	const queries: Record<string, TreeItem> = {};
 
