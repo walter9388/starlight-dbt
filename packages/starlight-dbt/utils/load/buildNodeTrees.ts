@@ -7,6 +7,21 @@ import type {
 	SavedQueryValues,
 } from './types';
 
+
+/**
+ * Build a hierarchical tree of sources grouped by `source_name`.
+ *
+ * - Groups source nodes under a folder per `source_name`.
+ * - Each folder is a `TreeItem` with `items` containing file `TreeItem`s for
+ *   each source node (uses the node's `name`).
+ * - Marks the folder `active` if any child matches `select` and marks the
+ *   child file `active` when its `unique_id` equals `select`.
+ * - File items include `node`, `unique_id`, and `node_type: 'source'`.
+ *
+ * @param nodes - Array of source nodes from the project manifest
+ * @param select - Optional unique_id to mark a node (and its parent) active
+ * @returns Array of `TreeItem` folders sorted by name, each containing sorted items
+ */
 export function buildSourceTree(nodes: SourceValues[], select?: string): TreeItem[] {
 	const sources: Record<string, TreeItem> = {};
 

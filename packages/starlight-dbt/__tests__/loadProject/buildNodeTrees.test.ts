@@ -5,7 +5,36 @@ import {
 	buildMetricTree,
 	buildSemanticModelTree,
 	buildSavedQueryTree,
+	buildSourceTree,
 } from '../../utils/load/buildNodeTrees';
+
+describe('buildSourceTree', () => {
+	it('groups sources by source_name, sorts and marks active selection', () => {
+		const nodes: any[] = [
+			{ name: 'src_a', source_name: 's1', unique_id: 'src.s1.src_a' },
+			{ name: 'src_b', source_name: 's2', unique_id: 'src.s2.src_b' },
+			{ name: 'src_c', source_name: 's1', unique_id: 'src.s1.src_c' },
+		];
+
+		const tree = buildSourceTree(nodes, 'src.s1.src_c');
+
+		// Should create folders for s1 and s2
+		expect(tree.map((t) => t.name)).toEqual(expect.arrayContaining(['s1', 's2']));
+
+		const s1 = tree.find((t) => t.name === 's1')!;
+		expect(s1).toBeDefined();
+		expect(s1.active).toBe(true); // src_c is selected
+		expect(s1.items).toHaveLength(2);
+		expect(s1.items?.find((t) => t.name === 'src_c')!.active).toBe(true);
+
+		const itemNames = (s1.items as any[]).map((i) => i.name);
+		expect(itemNames).toEqual(['src_a', 'src_c']); // sorted by name
+
+		const s2 = tree.find((t) => t.name === 's2')!;
+		expect(s2.active).toBe(false);
+		expect(s2.items![0]!.active).toBe(false);
+	});
+});
 
 describe('buildExposureTree', () => {
 	it('groups exposures by type, sorts and marks active selection', () => {
