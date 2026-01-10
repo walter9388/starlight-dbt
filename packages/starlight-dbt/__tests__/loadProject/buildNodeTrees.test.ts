@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
 
-import { buildExposureTree, buildMetricTree } from '../../utils/load/buildNodeTrees';
+import {
+	buildExposureTree,
+	buildMetricTree,
+	buildSemanticModelTree,
+} from '../../utils/load/buildNodeTrees';
 
 describe('buildExposureTree', () => {
 	it('groups exposures by type, sorts and marks active selection', () => {
@@ -59,10 +63,38 @@ describe('buildMetricTree', () => {
 		expect(pkg1).toBeDefined();
 		expect(pkg1.active).toBe(true); // metric_c is selected
 		expect(pkg1.items).toHaveLength(2);
-		expect( pkg1.items?.find((t) => t.name === 'metric_c')!.active).toBe(true);
+		expect(pkg1.items?.find((t) => t.name === 'metric_c')!.active).toBe(true);
 
 		const itemNames = (pkg1.items as any[]).map((i) => i.name);
 		expect(itemNames).toEqual(['Metric A', 'metric_c']); // sorted, metric_a uses label
+
+		const pkg2 = tree.find((t) => t.name === 'pkg2')!;
+		expect(pkg2.active).toBe(false);
+		expect(pkg2.items![0]!.active).toBe(false);
+	});
+});
+
+describe('buildSemanticModelTree', () => {
+	it('groups semantic models by package_name, sorts and marks active selection', () => {
+		const nodes: any[] = [
+			{ name: 'model_a', package_name: 'pkg1', unique_id: 'sm.pkg1.model_a' },
+			{ name: 'model_b', package_name: 'pkg2', unique_id: 'sm.pkg2.model_b' },
+			{ name: 'model_c', package_name: 'pkg1', unique_id: 'sm.pkg1.model_c' },
+		];
+
+		const tree = buildSemanticModelTree(nodes, 'sm.pkg1.model_c');
+
+		// Should create folders for pkg1 and pkg2
+		expect(tree.map((t) => t.name)).toEqual(expect.arrayContaining(['pkg1', 'pkg2']));
+
+		const pkg1 = tree.find((t) => t.name === 'pkg1')!;
+		expect(pkg1).toBeDefined();
+		expect(pkg1.active).toBe(true); // model_c is selected
+		expect(pkg1.items).toHaveLength(2);
+		expect(pkg1.items?.find((t) => t.name === 'model_c')!.active).toBe(true);
+
+		const itemNames = (pkg1.items as any[]).map((i) => i.name);
+		expect(itemNames).toEqual(['model_a', 'model_c']); // sorted by name
 
 		const pkg2 = tree.find((t) => t.name === 'pkg2')!;
 		expect(pkg2.active).toBe(false);

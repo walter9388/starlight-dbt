@@ -154,6 +154,20 @@ export function buildMetricTree(nodes: MetricValues[], select?: string): TreeIte
 		}));
 }
 
+/**
+ * Build a hierarchical tree of semantic models grouped by `package_name`.
+ *
+ * - Groups semantic model nodes under a folder per `package_name`.
+ * - Each folder is a `TreeItem` with `items` containing file `TreeItem`s for
+ *   each semantic model (uses the node's `name`).
+ * - Marks the folder `active` if any child matches `select` and marks the
+ *   child file `active` when its `unique_id` equals `select`.
+ * - File items include `node`, `unique_id`, and `node_type: 'semantic_model'`.
+ *
+ * @param nodes - Array of semantic model nodes from the project manifest
+ * @param select - Optional unique_id to mark a node (and its parent) active
+ * @returns Array of `TreeItem` folders sorted by name, each containing sorted items
+ */
 export function buildSemanticModelTree(nodes: SemanticModelValues[], select?: string): TreeItem[] {
 	const models: Record<string, TreeItem> = {};
 
