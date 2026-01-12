@@ -7,6 +7,56 @@ import type {
 	SavedQueryValues,
 } from './types';
 
+/**
+ * Capitalize the first character of a type string.
+ *
+ * @param type - The type string to capitalize
+ * @returns The input string with the first character capitalized
+ */
+function capitalizeType(type: string): string {
+	return type.charAt(0).toUpperCase() + type.slice(1);
+}
+
+/**
+ * Retrieve a folder `TreeItem` from the provided map by `name`, creating and
+ * inserting a new folder if one does not already exist.
+ *
+ * - Ensures callers always receive a `TreeItem` of type `folder` with an
+ *   initialized `items` array.
+ * - Does not mutate the returned folder's `active` or `items` beyond
+ *   creation; callers may update those fields as needed.
+ *
+ * @param map - A `Map` keyed by folder name storing `TreeItem` folders
+ * @param name - The folder name to retrieve or create
+ * @returns The existing or newly-created `TreeItem` for the folder
+ */
+function getOrCreateFolder(map: Map<string, TreeItem>, name: string): TreeItem {
+	let folder = map.get(name);
+	if (!folder) {
+		folder = { type: 'folder', name, active: false, items: [] };
+		map.set(name, folder);
+	}
+	return folder;
+}
+
+/**
+ * Return a new array of `TreeItem` folders sorted by folder `name`, where
+ * each folder's `items` array is also sorted by item `name`.
+ *
+ * This function does not mutate the input: it creates shallow copies of the
+ * group objects and their `items` arrays then applies locale-aware sorting.
+ *
+ * @param treeItems - Array of folder `TreeItem`s to sort
+ * @returns New array of sorted `TreeItem` folders with sorted `items`
+ */
+function sortTreeItems(treeItems: TreeItem[]): TreeItem[] {
+	return treeItems
+		.map((group) => ({
+			...group,
+			items: [...group.items!].sort((a, b) => a.name.localeCompare(b.name)),
+		}))
+		.sort((a, b) => a.name.localeCompare(b.name));
+}
 
 /**
  * Build a hierarchical tree of sources grouped by `source_name`.
@@ -23,24 +73,18 @@ import type {
  * @returns Array of `TreeItem` folders sorted by name, each containing sorted items
  */
 export function buildSourceTree(nodes: SourceValues[], select?: string): TreeItem[] {
-	const sources: Record<string, TreeItem> = {};
+	const sources = new Map<string, TreeItem>();
 
 	for (const node of nodes) {
-		const source = node.source_name;
+		const source_name = node.source_name;
+		const source = getOrCreateFolder(sources, source_name);
+		
 		const isActive = node.unique_id === select;
-
-		if (!sources[source]) {
-			sources[source] = {
-				type: 'folder',
-				name: source,
-				active: isActive,
-				items: [],
-			};
-		} else if (isActive) {
-			sources[source].active = true;
+		if (isActive) {
+			source.active = true;
 		}
 
-		(sources[source].items as TreeItem[]).push({
+		source.items!.push({
 			type: 'file',
 			name: node.name,
 			node,
@@ -50,22 +94,7 @@ export function buildSourceTree(nodes: SourceValues[], select?: string): TreeIte
 		});
 	}
 
-	return Object.values(sources)
-		.sort((a, b) => a.name.localeCompare(b.name))
-		.map((source) => ({
-			...source,
-			items: (source.items as TreeItem[]).sort((a, b) => a.name.localeCompare(b.name)),
-		}));
-}
-
-/**
- * Capitalize the first character of a type string.
- *
- * @param type - The type string to capitalize
- * @returns The input string with the first character capitalized
- */
-function capitalizeType(type: string): string {
-	return type.charAt(0).toUpperCase() + type.slice(1);
+	return sortTreeItems([...sources.values()]);
 }
 
 /**
@@ -84,26 +113,20 @@ function capitalizeType(type: string): string {
  * @returns Array of `TreeItem` folders sorted by name, each containing sorted items
  */
 export function buildExposureTree(nodes: ExposureValues[], select?: string): TreeItem[] {
-	const exposures: Record<string, TreeItem> = {};
+	const exposures = new Map<string, TreeItem>();
 
 	for (const node of nodes) {
-		const type = capitalizeType(node.type || 'Uncategorized');
+		const name = capitalizeType(node.type ?? 'Uncategorized');
+		const exposure = getOrCreateFolder(exposures, name);
+		
 		const isActive = node.unique_id === select;
-
-		if (!exposures[type]) {
-			exposures[type] = {
-				type: 'folder',
-				name: type,
-				active: isActive,
-				items: [],
-			};
-		} else if (isActive) {
-			exposures[type].active = true;
+		if (isActive) {
+			exposure.active = true;
 		}
 
-		(exposures[type].items as TreeItem[]).push({
+		exposure.items!.push({
 			type: 'file',
-			name: node.label || node.name,
+			name: node.label ?? node.name,
 			node,
 			active: isActive,
 			unique_id: node.unique_id,
@@ -111,12 +134,7 @@ export function buildExposureTree(nodes: ExposureValues[], select?: string): Tre
 		});
 	}
 
-	return Object.values(exposures)
-		.sort((a, b) => a.name.localeCompare(b.name))
-		.map((exposure) => ({
-			...exposure,
-			items: (exposure.items as TreeItem[]).sort((a, b) => a.name.localeCompare(b.name)),
-		}));
+	return sortTreeItems([...exposures.values()]);
 }
 
 /**
@@ -134,26 +152,20 @@ export function buildExposureTree(nodes: ExposureValues[], select?: string): Tre
  * @returns Array of `TreeItem` folders sorted by name, each containing sorted items
  */
 export function buildMetricTree(nodes: MetricValues[], select?: string): TreeItem[] {
-	const metrics: Record<string, TreeItem> = {};
+	const metrics = new Map<string, TreeItem>();
 
 	for (const node of nodes) {
 		const project = node.package_name;
+		const metric = getOrCreateFolder(metrics, project);
+		
 		const isActive = node.unique_id === select;
-
-		if (!metrics[project]) {
-			metrics[project] = {
-				type: 'folder',
-				name: project,
-				active: isActive,
-				items: [],
-			};
-		} else if (isActive) {
-			metrics[project].active = true;
+		if (isActive) {
+			metric.active = true;
 		}
 
-		(metrics[project].items as TreeItem[]).push({
+		metric.items!.push({
 			type: 'file',
-			name: node.label || node.name,
+			name: node.label ?? node.name,
 			node,
 			active: isActive,
 			unique_id: node.unique_id,
@@ -161,12 +173,7 @@ export function buildMetricTree(nodes: MetricValues[], select?: string): TreeIte
 		});
 	}
 
-	return Object.values(metrics)
-		.sort((a, b) => a.name.localeCompare(b.name))
-		.map((metric) => ({
-			...metric,
-			items: (metric.items as TreeItem[]).sort((a, b) => a.name.localeCompare(b.name)),
-		}));
+	return sortTreeItems([...metrics.values()]);
 }
 
 /**
@@ -184,24 +191,18 @@ export function buildMetricTree(nodes: MetricValues[], select?: string): TreeIte
  * @returns Array of `TreeItem` folders sorted by name, each containing sorted items
  */
 export function buildSemanticModelTree(nodes: SemanticModelValues[], select?: string): TreeItem[] {
-	const models: Record<string, TreeItem> = {};
+	const models = new Map<string, TreeItem>();
 
 	for (const node of nodes) {
 		const project = node.package_name;
+		const model = getOrCreateFolder(models, project);
+		
 		const isActive = node.unique_id === select;
-
-		if (!models[project]) {
-			models[project] = {
-				type: 'folder',
-				name: project,
-				active: isActive,
-				items: [],
-			};
-		} else if (isActive) {
-			models[project].active = true;
+		if (isActive) {
+			model.active = true;
 		}
 
-		(models[project].items as TreeItem[]).push({
+		model.items!.push({
 			type: 'file',
 			name: node.name,
 			node,
@@ -211,12 +212,7 @@ export function buildSemanticModelTree(nodes: SemanticModelValues[], select?: st
 		});
 	}
 
-	return Object.values(models)
-		.sort((a, b) => a.name.localeCompare(b.name))
-		.map((model) => ({
-			...model,
-			items: (model.items as TreeItem[]).sort((a, b) => a.name.localeCompare(b.name)),
-		}));
+	return sortTreeItems([...models.values()]);
 }
 
 /**
@@ -234,24 +230,18 @@ export function buildSemanticModelTree(nodes: SemanticModelValues[], select?: st
  * @returns Array of `TreeItem` folders sorted by name, each containing sorted items
  */
 export function buildSavedQueryTree(nodes: SavedQueryValues[], select?: string): TreeItem[] {
-	const queries: Record<string, TreeItem> = {};
+	const queries = new Map<string, TreeItem>();
 
 	for (const node of nodes) {
 		const project = node.package_name;
+		const query = getOrCreateFolder(queries, project);
+		
 		const isActive = node.unique_id === select;
-
-		if (!queries[project]) {
-			queries[project] = {
-				type: 'folder',
-				name: project,
-				active: isActive,
-				items: [],
-			};
-		} else if (isActive) {
-			queries[project].active = true;
+		if (isActive) {
+			query.active = true;
 		}
 
-		(queries[project].items as TreeItem[]).push({
+		query.items!.push({
 			type: 'file',
 			name: node.name,
 			node,
@@ -261,10 +251,5 @@ export function buildSavedQueryTree(nodes: SavedQueryValues[], select?: string):
 		});
 	}
 
-	return Object.values(queries)
-		.sort((a, b) => a.name.localeCompare(b.name))
-		.map((query) => ({
-			...query,
-			items: (query.items as TreeItem[]).sort((a, b) => a.name.localeCompare(b.name)),
-		}));
+	return sortTreeItems([...queries.values()]);
 }
