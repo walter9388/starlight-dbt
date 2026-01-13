@@ -11,9 +11,9 @@ import {
 	buildGroupTree,
 	isFolder,
 	assertFolder,
-	type TreeFolder,
-	type TreeFile,
 } from '../../utils/load/buildNodeTrees';
+
+import type { TreeFolder, TreeFile } from '../../utils/load/types';
 
 describe('buildSourceTree', () => {
 	it('groups sources by source_name, sorts and marks active selection', () => {

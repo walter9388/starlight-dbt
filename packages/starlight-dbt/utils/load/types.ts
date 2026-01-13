@@ -103,21 +103,6 @@ export type AugmentedCatalogArtifact = CatalogArtifact & {
 export type Project = AugmentedManifestArtifact &
 	AugmentedCatalogArtifact & { searchable?: (AugmentedColumnNode | AugmentedMacros[string])[] };
 
-export interface ProjectService {
-	project: Project;
-	tree: {
-		project: any[];
-		database: any[];
-		sources: any[];
-	};
-	files: {
-		manifest: AugmentedManifestArtifact;
-		catalog: AugmentedCatalogArtifact;
-	};
-	loaded: boolean;
-	init: () => Promise<void>;
-}
-
 export type ProjectNode =
 	| Seed
 	| Analysis
@@ -156,6 +141,25 @@ export type FilterProjectNode =
 	  >
 	| SingularTest;
 
+export interface ProjectService {
+	project: Project;
+	tree: {
+		project: TreeFolder<FilterProjectNode | MacroValues>[];
+		database: TreeFolder<FilterProjectNode>[];
+		groups: TreeFolder<FilterProjectNode>[];
+		sources: TreeFolder<SourceValues>[];
+		exposures: TreeFolder<ExposureValues>[];
+		metrics: TreeFolder<MetricValues>[];
+		semantic_models: TreeFolder<SemanticModelValues>[];
+		saved_queries: TreeFolder<SavedQueryValues>[];
+	};
+	files: {
+		manifest: AugmentedManifestArtifact;
+		catalog: AugmentedCatalogArtifact;
+	};
+	loaded: boolean;
+	init: () => Promise<void>;
+}
 type ValueOf<T> = T[keyof T];
 export type NodeValues = ValueOf<Project['nodes']>;
 export type SourceValues = ValueOf<Project['sources']>;
@@ -164,3 +168,76 @@ export type MetricValues = ValueOf<Project['metrics']>;
 export type SemanticModelValues = ValueOf<Project['semantic_models']>;
 export type SavedQueryValues = ValueOf<Project['saved_queries']>;
 export type MacroValues = ValueOf<Project['macros']>;
+
+export type TreeNodeType =
+	| 'source'
+	| 'exposure'
+	| 'metric'
+	| 'semantic_model'
+	| 'saved_query'
+	| 'model'
+	| 'macro'
+	| 'analysis'
+	| 'test'
+	| 'snapshot'
+	| 'seed';
+
+/**
+ * Represents a leaf node in a tree.
+ *
+ * Used for concrete entities such as models, tables, macros,
+ * sources, metrics, etc.
+ *
+ * @typeParam TNode - Underlying domain node type
+ */
+export type TreeFile<TNode> = {
+	/** Discriminator for tree rendering */
+	type: 'file' | 'table';
+
+	/** Display name shown in the UI */
+	name: string;
+
+	/** Original domain node backing this tree item */
+	node: TNode;
+
+	/** Whether this node is currently active/selected */
+	active: boolean;
+
+	/** Unique identifier of the underlying node */
+	unique_id: string;
+
+	/** Resource type used by the UI layer */
+	node_type: TreeNodeType;
+};
+
+/**
+ * Represents a grouping node in a tree.
+ *
+ * Folders may represent logical or physical groupings such as
+ * packages, directories, databases, schemas, or semantic groups.
+ *
+ * @typeParam TNode - Underlying domain node type for descendants
+ */
+export type TreeFolder<TNode> = {
+	/** Folder discriminator */
+	type: 'folder' | 'database' | 'schema' | 'group';
+
+	/** Folder name shown in the UI */
+	name: string;
+
+	/** Whether any descendant node is active */
+	active: boolean;
+
+	/** Child folders or files */
+	items: TreeItem<TNode>[];
+};
+
+/**
+ * Discriminated union representing any node in a tree.
+ *
+ * A TreeItem may be either a folder (with children)
+ * or a file (leaf node).
+ *
+ * @typeParam TNode - Underlying domain node type
+ */
+export type TreeItem<TNode> = TreeFolder<TNode> | TreeFile<TNode>;
