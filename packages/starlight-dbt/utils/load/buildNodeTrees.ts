@@ -1,255 +1,452 @@
 import type {
-	TreeItem,
 	SourceValues,
 	ExposureValues,
 	MetricValues,
 	SemanticModelValues,
 	SavedQueryValues,
+	MacroValues,
+	FilterProjectNode,
 } from './types';
 
+type TreeNodeType =
+	| 'source'
+	| 'exposure'
+	| 'metric'
+	| 'semantic_model'
+	| 'saved_query'
+	| 'model'
+	| 'macro'
+	| 'analysis'
+	| 'test'
+	| 'snapshot'
+	| 'seed';
+
 /**
- * Capitalize the first character of a type string.
+ * Represents a leaf node in a tree.
  *
- * @param type - The type string to capitalize
- * @returns The input string with the first character capitalized
+ * Used for concrete entities such as models, tables, macros,
+ * sources, metrics, etc.
+ *
+ * @typeParam TNode - Underlying domain node type
+ */
+type TreeFile<TNode> = {
+	/** Discriminator for tree rendering */
+	type: 'file' | 'table';
+
+	/** Display name shown in the UI */
+	name: string;
+
+	/** Original domain node backing this tree item */
+	node: TNode;
+
+	/** Whether this node is currently active/selected */
+	active: boolean;
+
+	/** Unique identifier of the underlying node */
+	unique_id: string;
+
+	/** Resource type used by the UI layer */
+	node_type: TreeNodeType;
+};
+
+/**
+ * Represents a grouping node in a tree.
+ *
+ * Folders may represent logical or physical groupings such as
+ * packages, directories, databases, schemas, or semantic groups.
+ *
+ * @typeParam TNode - Underlying domain node type for descendants
+ */
+type TreeFolder<TNode> = {
+	/** Folder discriminator */
+	type: 'folder' | 'database' | 'schema' | 'group';
+
+	/** Folder name shown in the UI */
+	name: string;
+
+	/** Whether any descendant node is active */
+	active: boolean;
+
+	/** Child folders or files */
+	items: TreeItem<TNode>[];
+};
+
+/**
+ * Discriminated union representing any node in a tree.
+ *
+ * A TreeItem may be either a folder (with children)
+ * or a file (leaf node).
+ *
+ * @typeParam TNode - Underlying domain node type
+ */
+type TreeItem<TNode> = TreeFolder<TNode> | TreeFile<TNode>;
+
+/**
+ * Capitalizes the first character of a string.
+ *
+ * @param type - Input string
+ * @returns String with the first character uppercased
  */
 function capitalizeType(type: string): string {
 	return type.charAt(0).toUpperCase() + type.slice(1);
 }
 
 /**
- * Retrieve a folder `TreeItem` from the provided map by `name`, creating and
- * inserting a new folder if one does not already exist.
+ * Retrieves a folder from a map by name, creating it if it does not exist.
  *
- * - Ensures callers always receive a `TreeItem` of type `folder` with an
- *   initialized `items` array.
- * - Does not mutate the returned folder's `active` or `items` beyond
- *   creation; callers may update those fields as needed.
+ * Ensures the returned item is a folder and throws if a name collision
+ * occurs with a non-folder item.
  *
- * @param map - A `Map` keyed by folder name storing `TreeItem` folders
- * @param name - The folder name to retrieve or create
- * @returns The existing or newly-created `TreeItem` for the folder
+ * @param map - Map of folder name to TreeItem
+ * @param name - Folder name
+ * @returns TreeFolder for the given name
  */
-function getOrCreateFolder(map: Map<string, TreeItem>, name: string): TreeItem {
-	let folder = map.get(name);
-	if (!folder) {
-		folder = { type: 'folder', name, active: false, items: [] };
-		map.set(name, folder);
+function getOrCreateFolder<T>(map: Record<string, TreeItem<T>>, name: string): TreeFolder<T> {
+	let item = map[name];
+	if (!item) {
+		item = {
+			type: 'folder',
+			name,
+			active: false,
+			items: [],
+		};
+		map[name] = item;
 	}
-	return folder;
+	if (item.type !== 'folder') {
+		throw new Error(`Expected folder for ${name}`);
+	}
+	return item;
+}
+
+function isDocsVisible(node: unknown): boolean {
+	if (typeof node !== 'object' || node === null) return true;
+	if (!('docs' in node)) return true;
+
+	const docs = (node as { docs?: { show?: boolean } }).docs;
+	return docs?.show !== false;
+}
+
+function isFolder<T>(item: TreeItem<T>): item is TreeFolder<T> {
+	return item.type !== 'file' && item.type !== 'table';
 }
 
 /**
- * Return a new array of `TreeItem` folders sorted by folder `name`, where
- * each folder's `items` array is also sorted by item `name`.
+ * Recursively normalizes and sorts a tree.
  *
- * This function does not mutate the input: it creates shallow copies of the
- * group objects and their `items` arrays then applies locale-aware sorting.
+ * - Sorts items at every level by name
+ * - Applies the same ordering to all nested folders
  *
- * @param treeItems - Array of folder `TreeItem`s to sort
- * @returns New array of sorted `TreeItem` folders with sorted `items`
+ * @typeParam T - Underlying node type
+ * @param items - Tree items to normalize
+ * @returns Sorted tree with normalized child ordering
  */
-function sortTreeItems(treeItems: TreeItem[]): TreeItem[] {
-	return treeItems
-		.map((group) => ({
-			...group,
-			items: [...group.items!].sort((a, b) => a.name.localeCompare(b.name)),
-		}))
+function normalizeTree<T>(items: TreeItem<T>[]): TreeItem<T>[] {
+	return items
+		.map((item) => (isFolder(item) ? { ...item, items: normalizeTree(item.items) } : item))
 		.sort((a, b) => a.name.localeCompare(b.name));
 }
 
 /**
- * Build a hierarchical tree of sources grouped by `source_name`.
+ * Builds a tree of folders grouped by a derived key.
  *
- * - Groups source nodes under a folder per `source_name`.
- * - Each folder is a `TreeItem` with `items` containing file `TreeItem`s for
- *   each source node (uses the node's `name`).
- * - Marks the folder `active` if any child matches `select` and marks the
- *   child file `active` when its `unique_id` equals `select`.
- * - File items include `node`, `unique_id`, and `node_type: 'source'`.
+ * Used for flat resources such as sources, exposures, metrics, etc.
+ * Each group becomes a folder containing file nodes.
  *
- * @param nodes - Array of source nodes from the project manifest
- * @param select - Optional unique_id to mark a node (and its parent) active
- * @returns Array of `TreeItem` folders sorted by name, each containing sorted items
+ * @typeParam T - Node type
+ * @param nodes - Nodes to group
+ * @param groupKey - Function producing a group name for a node
+ * @param nodeType - Resource type string for UI consumption
+ * @param select - Optional unique_id to mark a node active
+ * @param labelKey - Optional property name used as display label
+ * @returns Array of grouped TreeItems
  */
-export function buildSourceTree(nodes: SourceValues[], select?: string): TreeItem[] {
-	const sources = new Map<string, TreeItem>();
+function buildGroupedTree<
+	T extends SourceValues | ExposureValues | MetricValues | SemanticModelValues | SavedQueryValues,
+>(
+	nodes: T[],
+	groupKey: (node: T) => string,
+	nodeType: TreeNodeType,
+	select?: string,
+	labelKey?: keyof T
+): TreeItem<T>[] {
+	const groups: Record<string, TreeFolder<T>> = {};
 
 	for (const node of nodes) {
-		const source_name = node.source_name;
-		const source = getOrCreateFolder(sources, source_name);
-		
-		const isActive = node.unique_id === select;
-		if (isActive) {
-			source.active = true;
-		}
+		const groupName = groupKey(node);
+		const folder = getOrCreateFolder<T>(groups, groupName);
 
-		source.items!.push({
+		const isActive = node.unique_id === select;
+		if (isActive) folder.active = true;
+
+		const fileName = labelKey ? String(node[labelKey] ?? node.name) : node.name;
+
+		folder.items.push({
 			type: 'file',
-			name: node.name,
+			name: fileName,
 			node,
 			active: isActive,
 			unique_id: node.unique_id,
-			node_type: 'source',
+			node_type: nodeType,
 		});
 	}
 
-	return sortTreeItems([...sources.values()]);
+	return Object.values(groups)
+		.map((group) => ({
+			...group,
+			items: [...group.items].sort((a, b) => a.name.localeCompare(b.name)),
+		}))
+		.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export function buildSourceTree(nodes: SourceValues[], select?: string): TreeItem<SourceValues>[] {
+	return buildGroupedTree(nodes, (n) => n.source_name, 'source', select);
+}
+
+export function buildExposureTree(
+	nodes: ExposureValues[],
+	select?: string
+): TreeItem<ExposureValues>[] {
+	return buildGroupedTree(
+		nodes,
+		(n) => capitalizeType(n.type ?? 'Uncategorized'),
+		'exposure',
+		select,
+		'label'
+	);
+}
+
+export function buildMetricTree(nodes: MetricValues[], select?: string): TreeItem<MetricValues>[] {
+	return buildGroupedTree(nodes, (n) => n.package_name, 'metric', select, 'label');
+}
+
+export function buildSemanticModelTree(
+	nodes: SemanticModelValues[],
+	select?: string
+): TreeItem<SemanticModelValues>[] {
+	return buildGroupedTree(nodes, (n) => n.package_name, 'semantic_model', select);
+}
+
+export function buildSavedQueryTree(
+	nodes: SavedQueryValues[],
+	select?: string
+): TreeItem<SavedQueryValues>[] {
+	return buildGroupedTree(nodes, (n) => n.package_name, 'saved_query', select);
 }
 
 /**
- * Build a hierarchical tree of exposures grouped by their (capitalized) type.
+ * Builds the main project file tree from models and macros.
  *
- * - Groups exposures by `node.type` (capitalized) or `Uncategorized` when
- *   missing.
- * - Each group is a `folder` TreeItem with `items` containing file TreeItems
- *   for each exposure.
- * - Marks the folder `active` if any child matches `select` and marks the
- *   child file `active` when its `unique_id` equals `select`.
- * - File items include `node`, `unique_id`, and `node_type: 'exposure'`.
+ * - Groups nodes by package and original file path
+ * - Respects hidden docs
+ * - Marks active nodes and propagates activity to parent folders
  *
- * @param nodes - Array of exposure nodes from the project manifest
- * @param select - Optional unique_id to mark a node (and its parent) active
- * @returns Array of `TreeItem` folders sorted by name, each containing sorted items
+ * @param nodes - Filtered project nodes
+ * @param macros - Macro nodes
+ * @param select - Optional unique_id to mark a node active
+ * @returns Hierarchical tree of folders and files
  */
-export function buildExposureTree(nodes: ExposureValues[], select?: string): TreeItem[] {
-	const exposures = new Map<string, TreeItem>();
+export function buildProjectTree(
+	nodes: FilterProjectNode[] = [],
+	macros: MacroValues[] = [],
+	select?: string
+): TreeItem<FilterProjectNode | MacroValues>[] {
+	const root: Record<string, TreeItem<FilterProjectNode | MacroValues>> = {};
 
-	for (const node of nodes) {
-		const name = capitalizeType(node.type ?? 'Uncategorized');
-		const exposure = getOrCreateFolder(exposures, name);
-		
+	for (const node of [...nodes, ...macros]) {
+		if (!isDocsVisible(node)) continue;
+		if (!['model', 'analysis', 'snapshot', 'seed', 'macro'].includes(node.resource_type)) continue;
+
 		const isActive = node.unique_id === select;
-		if (isActive) {
-			exposure.active = true;
+		const pathParts = node.original_file_path.split(/[\\/]/);
+		const fullPath = [node.package_name, ...pathParts];
+		const dirPath = fullPath.slice(0, -1);
+
+		const fileName = node.resource_type === 'macro' ? node.name : fullPath.at(-1)!;
+		const displayName =
+			node.resource_type === 'model' && node.version != null
+				? `${node.name}_v${node.version}`
+				: node.name;
+
+		const current = root;
+		for (const segment of dirPath) {
+			let folder = current[segment] as TreeFolder<FilterProjectNode | MacroValues> | undefined;
+			if (!folder) {
+				folder = { type: 'folder', name: segment, active: false, items: [] };
+				current[segment] = folder;
+			}
+			if (folder.type !== 'folder') throw new Error(`Path collision at ${segment}`);
+			if (isActive) folder.active = true;
+			// current = folder.items;
 		}
 
-		exposure.items!.push({
+		current[fileName] = {
 			type: 'file',
-			name: node.label ?? node.name,
+			name: displayName,
 			node,
 			active: isActive,
 			unique_id: node.unique_id,
-			node_type: 'exposure',
-		});
+			node_type: node.resource_type,
+		};
 	}
 
-	return sortTreeItems([...exposures.values()]);
+	return normalizeTree(Object.values(root));
 }
 
 /**
- * Build a hierarchical tree of metrics grouped by `package_name`.
+ * Builds a database → schema → table tree.
  *
- * - Groups metric nodes under a folder per `package_name`.
- * - Each folder is a `TreeItem` with `items` containing file `TreeItem`s for
- *   each metric (uses `label` if present, otherwise `name`).
- * - Marks the folder `active` if any child matches `select` and marks the
- *   child file `active` when its `unique_id` equals `select`.
- * - File items include `node`, `unique_id`, and `node_type: 'metric'`.
+ * - Filters out hidden and ephemeral models
+ * - Groups by database and schema
+ * - Marks active nodes and propagates activity
  *
- * @param nodes - Array of metric nodes from the project manifest
+ * @param nodes - Array of project nodes
  * @param select - Optional unique_id to mark a node (and its parent) active
- * @returns Array of `TreeItem` folders sorted by name, each containing sorted items
+ * @returns Record keyed by database, each containing TreeItem folders
  */
-export function buildMetricTree(nodes: MetricValues[], select?: string): TreeItem[] {
-	const metrics = new Map<string, TreeItem>();
+export function buildDatabaseTree(
+	nodes: FilterProjectNode[],
+	select?: string
+): TreeItem<FilterProjectNode>[] {
+	const databases: Record<string, TreeFolder<FilterProjectNode>> = {};
+	type DatabaseProjectNode = Extract<
+		FilterProjectNode,
+		{
+			resource_type: 'source' | 'snapshot' | 'seed' | 'model';
+		}
+	>;
 
-	for (const node of nodes) {
-		const project = node.package_name;
-		const metric = getOrCreateFolder(metrics, project);
-		
-		const isActive = node.unique_id === select;
-		if (isActive) {
-			metric.active = true;
+	const visibleNodes = nodes.filter((node): node is DatabaseProjectNode => {
+		if (!isDocsVisible(node)) return false;
+		if (['source', 'snapshot', 'seed'].includes(node.resource_type)) return true;
+		if (node.resource_type === 'model') {
+			return node.config?.materialized !== 'ephemeral';
+		}
+		return false;
+	});
+
+	const getDisplayName = (n: DatabaseProjectNode): string => {
+		if ('identifier' in n && n.identifier) return n.identifier;
+		if ('alias' in n && n.alias) return n.alias;
+		return n.name;
+	};
+	const getSortString = (n: DatabaseProjectNode) =>
+		`${n.database}.${n.schema}.${getDisplayName(n)}`;
+	const sorted = [...visibleNodes].sort((a, b) => getSortString(a).localeCompare(getSortString(b)));
+
+	for (const node of sorted) {
+		const dbName = node.database ?? 'Default';
+		const schemaName = node.schema ?? 'public';
+		const { unique_id } = node;
+
+		const isActive = unique_id === select;
+
+		if (!databases[dbName]) {
+			databases[dbName] = {
+				type: 'database',
+				name: dbName,
+				active: false,
+				items: [],
+			};
+		}
+		const database = databases[dbName];
+
+		let schema = database.items.find(
+			(item): item is TreeFolder<FilterProjectNode> =>
+				item.type === 'schema' && item.name === schemaName
+		);
+
+		if (!schema) {
+			schema = {
+				type: 'schema',
+				name: schemaName,
+				active: false,
+				items: [],
+			};
+			database.items.push(schema);
 		}
 
-		metric.items!.push({
-			type: 'file',
-			name: node.label ?? node.name,
-			node,
+		if (isActive) {
+			database.active = true;
+			schema.active = true;
+		}
+
+		schema.items.push({
+			type: 'table',
+			name: getDisplayName(node),
+			node: node,
 			active: isActive,
-			unique_id: node.unique_id,
-			node_type: 'metric',
+			unique_id: unique_id,
+			node_type: 'model',
 		});
 	}
 
-	return sortTreeItems([...metrics.values()]);
+	return normalizeTree(Object.values(databases));
 }
 
 /**
- * Build a hierarchical tree of semantic models grouped by `package_name`.
+ * Builds a tree grouping project nodes by their `group` property.
  *
- * - Groups semantic model nodes under a folder per `package_name`.
- * - Each folder is a `TreeItem` with `items` containing file `TreeItem`s for
- *   each semantic model (uses the node's `name`).
- * - Marks the folder `active` if any child matches `select` and marks the
- *   child file `active` when its `unique_id` equals `select`.
- * - File items include `node`, `unique_id`, and `node_type: 'semantic_model'`.
+ * - Excludes sources, exposures, seeds, and hidden/private nodes
+ * - Appends "(protected)" to protected models
+ * - Marks active nodes and propagates activity to parent groups
  *
- * @param nodes - Array of semantic model nodes from the project manifest
- * @param select - Optional unique_id to mark a node (and its parent) active
- * @returns Array of `TreeItem` folders sorted by name, each containing sorted items
+ * @param nodes - Array of project nodes
+ * @param select - Optional unique_id to mark a node active
+ * @returns Grouped tree of models
  */
-export function buildSemanticModelTree(nodes: SemanticModelValues[], select?: string): TreeItem[] {
-	const models = new Map<string, TreeItem>();
+
+export function buildGroupTree(
+	nodes: FilterProjectNode[],
+	select?: string
+): TreeItem<FilterProjectNode>[] {
+	const groups: Record<string, TreeFolder<FilterProjectNode>> = {};
 
 	for (const node of nodes) {
-		const project = node.package_name;
-		const model = getOrCreateFolder(models, project);
-		
-		const isActive = node.unique_id === select;
-		if (isActive) {
-			model.active = true;
-		}
+		if (!isDocsVisible(node)) continue;
+		if (
+			node.resource_type === 'source' ||
+			node.resource_type === 'exposure' ||
+			node.resource_type === 'seed'
+		)
+			continue;
+		if ('access' in node && node.access === 'private') continue;
 
-		model.items!.push({
+		const isActive = node.unique_id === select;
+
+		const baseName =
+			node.resource_type === 'model' && 'version' in node && node.version != null
+				? `${node.name}_v${node.version}`
+				: node.name;
+
+		const displayName =
+			'access' in node && node.access === 'protected' ? `${baseName} (protected)` : baseName;
+
+		const groupName = node.group ?? 'Ungrouped';
+
+		const group =
+			groups[groupName] ??
+			(() => {
+				const g: TreeFolder<FilterProjectNode> = {
+					type: 'group',
+					name: groupName,
+					active: false,
+					items: [],
+				};
+				groups[groupName] = g;
+				return g;
+			})();
+
+		if (isActive) group.active = true;
+
+		group.items.push({
 			type: 'file',
-			name: node.name,
+			name: displayName,
 			node,
 			active: isActive,
 			unique_id: node.unique_id,
-			node_type: 'semantic_model',
+			node_type: 'model',
 		});
 	}
 
-	return sortTreeItems([...models.values()]);
-}
-
-/**
- * Build a hierarchical tree of saved queries grouped by `package_name`.
- *
- * - Groups saved query nodes under a folder per `package_name`.
- * - Each folder is a `TreeItem` with `items` containing file `TreeItem`s for
- *   each saved query (uses the node's `name`).
- * - Marks the folder `active` if any child matches `select` and marks the
- *   child file `active` when its `unique_id` equals `select`.
- * - File items include `node`, `unique_id`, and `node_type: 'saved_query'`.
- *
- * @param nodes - Array of saved query nodes from the project manifest
- * @param select - Optional unique_id to mark a node (and its parent) active
- * @returns Array of `TreeItem` folders sorted by name, each containing sorted items
- */
-export function buildSavedQueryTree(nodes: SavedQueryValues[], select?: string): TreeItem[] {
-	const queries = new Map<string, TreeItem>();
-
-	for (const node of nodes) {
-		const project = node.package_name;
-		const query = getOrCreateFolder(queries, project);
-		
-		const isActive = node.unique_id === select;
-		if (isActive) {
-			query.active = true;
-		}
-
-		query.items!.push({
-			type: 'file',
-			name: node.name,
-			node,
-			active: isActive,
-			unique_id: node.unique_id,
-			node_type: 'saved_query',
-		});
-	}
-
-	return sortTreeItems([...queries.values()]);
+	return normalizeTree(Object.values(groups));
 }

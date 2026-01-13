@@ -1,5 +1,16 @@
 import type { CatalogArtifactV1 } from '@yu-iskw/dbt-artifacts-parser/dist/catalog';
-import type { WritableManifest } from '@yu-iskw/dbt-artifacts-parser/dist/manifest';
+import type {
+	WritableManifest,
+	Seed,
+	Analysis,
+	SingularTest,
+	HookNode,
+	Model,
+	SqlOperation,
+	GenericTest,
+	Snapshot,
+	Function,
+} from '@yu-iskw/dbt-artifacts-parser/dist/manifest';
 
 /**
  * Input accepted by artifact loaders.
@@ -107,21 +118,49 @@ export interface ProjectService {
 	init: () => Promise<void>;
 }
 
-type TreeItemType = 'folder' | 'file' | 'database' | 'schema' | 'table' | 'group';
+export type ProjectNode =
+	| Seed
+	| Analysis
+	| SingularTest
+	| HookNode
+	| Model
+	| SqlOperation
+	| GenericTest
+	| Snapshot
+	| Function
+	| AugmentedColumnNode
+	| ManifestSource
+	| ManifestExposure
+	| ManifestMetric
+	| ManifestSemanticModel
+	| ManifestSavedQuery
+	| ManifestUnitTest
+	| CatalogNode
+	| CatalogSource;
 
-export interface TreeItem {
-	type: TreeItemType;
-	name: string;
-	active: boolean;
-	items?: TreeItem[]; // | Record<string, TreeItem>;
-	node?: any;
-	unique_id?: string;
-	node_type?: string;
-}
+export type FilterProjectNode =
+	| Extract<
+			ProjectNode,
+			{
+				resource_type:
+					| 'snapshot'
+					| 'source'
+					| 'seed'
+					| 'model'
+					| 'analysis'
+					| 'exposure'
+					| 'metric'
+					| 'semantic_model'
+					| 'saved_query';
+			}
+	  >
+	| SingularTest;
 
 type ValueOf<T> = T[keyof T];
+export type NodeValues = ValueOf<Project['nodes']>;
 export type SourceValues = ValueOf<Project['sources']>;
 export type ExposureValues = ValueOf<Project['exposures']>;
-export type MetricValues = ValueOf<Project['nodes']>;
-export type SemanticModelValues = ValueOf<Project['nodes']>;
-export type SavedQueryValues = ValueOf<Project['nodes']>;
+export type MetricValues = ValueOf<Project['metrics']>;
+export type SemanticModelValues = ValueOf<Project['semantic_models']>;
+export type SavedQueryValues = ValueOf<Project['saved_queries']>;
+export type MacroValues = ValueOf<Project['macros']>;
