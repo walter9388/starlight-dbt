@@ -24,7 +24,7 @@ describe('incorporate_catalog', () => {
 		expect(merged.nodes.source1).toBeDefined();
 		expect(merged.nodes.source1!.metadata.name).toBe('source1');
 
-		const cols = merged.nodes.node1?.columns;
+		const cols = merged.nodes.model_node?.columns;
 		// original 'id' should map to 'ID' and index/info should both be there
 		expect(cols?.ID!.info).toBe(1);
 		expect(cols?.ID!.index).toBeDefined();

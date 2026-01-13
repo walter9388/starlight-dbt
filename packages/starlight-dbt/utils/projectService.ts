@@ -1,5 +1,5 @@
 // adapted from https://github.com/dbt-labs/dbt-docs/blob/e03a7912f50d0ceb770fb77b99a059d57f810a9c/src/app/services/project_service.js
-import { loadProject } from './load/loadProject';
+import { loadProject, populateModelTree } from './load/loadProject';
 
 import type {
 	AugmentedCatalogArtifact,
@@ -16,14 +16,27 @@ export function createProjectService(manifestInput: JsonInput, catalogInput: Jso
 		tree: {
 			project: [],
 			database: [],
+			groups: [],
 			sources: [],
+			exposures: [],
+			metrics: [],
+			semantic_models: [],
+			saved_queries: [],
 		},
 		files: {
 			manifest: {} as ManifestArtifact,
 			catalog: {} as CatalogArtifact,
 		},
 		loaded: false,
-		init: () => loadProject(service, manifestInput, catalogInput),
+
+		/**
+		 * Loads the project from manifest/catalog and populates the trees.
+		 */
+		init: async function () {
+			await loadProject(this, manifestInput, catalogInput);
+			await populateModelTree(this);
+			this.loaded = true;
+		},
 	};
 
 	return service;

@@ -1,5 +1,15 @@
 // adapted from https://github.com/dbt-labs/dbt-docs/blob/e03a7912f50d0ceb770fb77b99a059d57f810a9c/src/app/services/project_service.js
 
+import {
+	buildDatabaseTree,
+	buildExposureTree,
+	buildGroupTree,
+	buildMetricTree,
+	buildProjectTree,
+	buildSavedQueryTree,
+	buildSemanticModelTree,
+	buildSourceTree,
+} from './buildNodeTrees';
 import { cleanProjectMacros } from './cleanProjectMacros';
 import { getQuoteChar } from './compat';
 import { incorporate_catalog } from './incorporateCatalog';
@@ -14,6 +24,7 @@ import type {
 	Project,
 	ProjectService,
 	TestInfo,
+	FilterProjectNode,
 } from './types';
 
 /**
@@ -218,4 +229,62 @@ export const loadProject = async function (
 	service.project = project;
 
 	service.loaded = true;
+};
+
+/**
+ * Populates the various hierarchical project trees in the given `ProjectService`.
+ *
+ * - Filters nodes from the project by accepted resource types and custom tests.
+ * - Extracts macros from the project.
+ * - Builds trees for:
+ *   - `database` → schema → table (`buildDatabaseTree`)
+ *   - grouped models by `group` property (`buildGroupTree`)
+ *   - project files & macros (`buildProjectTree`)
+ *   - sources (`buildSourceTree`)
+ *   - exposures (`buildExposureTree`)
+ *   - metrics (`buildMetricTree`)
+ *   - semantic models (`buildSemanticModelTree`)
+ *   - saved queries (`buildSavedQueryTree`)
+ * - Assigns the resulting trees to `service.tree`.
+ *
+ * @param service - The `ProjectService` instance containing project nodes, macros, and tree storage
+ * @returns Promise<void> that resolves when all trees have been populated
+ */
+export const populateModelTree = async function (service: ProjectService) {
+	// get nodes/macros from service.project
+	const acceptedNodeTypes = [
+		'snapshot',
+		'source',
+		'seed',
+		'model',
+		'analysis',
+		'exposure',
+		'metric',
+		'semantic_model',
+		'saved_query',
+	];
+	const nodes = Object.values(service.project.nodes).filter((node) => {
+		if (!('resource_type' in node)) return false;
+
+		// Include custom singular tests
+		if (node.resource_type === 'test' && !('test_metadata' in node)) {
+			return true;
+		}
+
+		// Include nodes with accepted resource types
+		return acceptedNodeTypes.includes(node.resource_type);
+	}) as FilterProjectNode[];
+	const macros = Object.values(service.project.macros);
+
+	// build trees
+	service.tree.database = buildDatabaseTree(nodes);
+	service.tree.groups = buildGroupTree(nodes);
+	service.tree.project = buildProjectTree(nodes, macros);
+	service.tree.sources = buildSourceTree(Object.values(service.project.sources));
+	service.tree.exposures = buildExposureTree(Object.values(service.project.exposures));
+	service.tree.metrics = buildMetricTree(Object.values(service.project.metrics));
+	service.tree.semantic_models = buildSemanticModelTree(
+		Object.values(service.project.semantic_models)
+	);
+	service.tree.saved_queries = buildSavedQueryTree(Object.values(service.project.saved_queries));
 };
