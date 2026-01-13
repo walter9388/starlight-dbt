@@ -8,7 +8,7 @@ import type {
 	FilterProjectNode,
 } from './types';
 
-type TreeNodeType =
+export type TreeNodeType =
 	| 'source'
 	| 'exposure'
 	| 'metric'
@@ -29,7 +29,7 @@ type TreeNodeType =
  *
  * @typeParam TNode - Underlying domain node type
  */
-type TreeFile<TNode> = {
+export type TreeFile<TNode> = {
 	/** Discriminator for tree rendering */
 	type: 'file' | 'table';
 
@@ -57,7 +57,7 @@ type TreeFile<TNode> = {
  *
  * @typeParam TNode - Underlying domain node type for descendants
  */
-type TreeFolder<TNode> = {
+export type TreeFolder<TNode> = {
 	/** Folder discriminator */
 	type: 'folder' | 'database' | 'schema' | 'group';
 
@@ -79,7 +79,7 @@ type TreeFolder<TNode> = {
  *
  * @typeParam TNode - Underlying domain node type
  */
-type TreeItem<TNode> = TreeFolder<TNode> | TreeFile<TNode>;
+export type TreeItem<TNode> = TreeFolder<TNode> | TreeFile<TNode>;
 
 /**
  * Capitalizes the first character of a string.
@@ -126,8 +126,14 @@ function isDocsVisible(node: unknown): boolean {
 	return docs?.show !== false;
 }
 
-function isFolder<T>(item: TreeItem<T>): item is TreeFolder<T> {
+export function isFolder<T>(item: TreeItem<T>): item is TreeFolder<T> {
 	return item.type !== 'file' && item.type !== 'table';
+}
+
+export function assertFolder<T>(item: TreeItem<T>): asserts item is TreeFolder<T> {
+	if (!isFolder(item)) {
+		throw new Error(`Expected folder, got ${item.type}`);
+	}
 }
 
 /**
@@ -140,9 +146,9 @@ function isFolder<T>(item: TreeItem<T>): item is TreeFolder<T> {
  * @param items - Tree items to normalize
  * @returns Sorted tree with normalized child ordering
  */
-function normalizeTree<T>(items: TreeItem<T>[]): TreeItem<T>[] {
+function normalizeTree<T extends TreeItem<unknown>>(items: T[]): T[] {
 	return items
-		.map((item) => (isFolder(item) ? { ...item, items: normalizeTree(item.items) } : item))
+		.map((item) => (isFolder(item) ? ({ ...item, items: normalizeTree(item.items) } as T) : item))
 		.sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -168,7 +174,7 @@ function buildGroupedTree<
 	nodeType: TreeNodeType,
 	select?: string,
 	labelKey?: keyof T
-): TreeItem<T>[] {
+): TreeFolder<T>[] {
 	const groups: Record<string, TreeFolder<T>> = {};
 
 	for (const node of nodes) {
@@ -205,7 +211,10 @@ function buildGroupedTree<
  * @param select - Optional unique_id to mark a source (and its folder) active
  * @returns Tree of source folders containing file items
  */
-export function buildSourceTree(nodes: SourceValues[], select?: string): TreeItem<SourceValues>[] {
+export function buildSourceTree(
+	nodes: SourceValues[],
+	select?: string
+): TreeFolder<SourceValues>[] {
 	return buildGroupedTree(nodes, (n) => n.source_name, 'source', select);
 }
 
@@ -221,7 +230,7 @@ export function buildSourceTree(nodes: SourceValues[], select?: string): TreeIte
 export function buildExposureTree(
 	nodes: ExposureValues[],
 	select?: string
-): TreeItem<ExposureValues>[] {
+): TreeFolder<ExposureValues>[] {
 	return buildGroupedTree(
 		nodes,
 		(n) => capitalizeType(n.type ?? 'Uncategorized'),
@@ -240,7 +249,10 @@ export function buildExposureTree(
  * @param select - Optional unique_id to mark a metric (and its folder) active
  * @returns Tree of metric folders containing file items
  */
-export function buildMetricTree(nodes: MetricValues[], select?: string): TreeItem<MetricValues>[] {
+export function buildMetricTree(
+	nodes: MetricValues[],
+	select?: string
+): TreeFolder<MetricValues>[] {
 	return buildGroupedTree(nodes, (n) => n.package_name, 'metric', select, 'label');
 }
 
@@ -254,7 +266,7 @@ export function buildMetricTree(nodes: MetricValues[], select?: string): TreeIte
 export function buildSemanticModelTree(
 	nodes: SemanticModelValues[],
 	select?: string
-): TreeItem<SemanticModelValues>[] {
+): TreeFolder<SemanticModelValues>[] {
 	return buildGroupedTree(nodes, (n) => n.package_name, 'semantic_model', select);
 }
 
@@ -268,7 +280,7 @@ export function buildSemanticModelTree(
 export function buildSavedQueryTree(
 	nodes: SavedQueryValues[],
 	select?: string
-): TreeItem<SavedQueryValues>[] {
+): TreeFolder<SavedQueryValues>[] {
 	return buildGroupedTree(nodes, (n) => n.package_name, 'saved_query', select);
 }
 
@@ -288,7 +300,7 @@ export function buildProjectTree(
 	nodes: FilterProjectNode[] = [],
 	macros: MacroValues[] = [],
 	select?: string
-): TreeItem<FilterProjectNode | MacroValues>[] {
+): TreeFolder<FilterProjectNode | MacroValues>[] {
 	const root: Record<string, TreeItem<FilterProjectNode | MacroValues>> = {};
 
 	for (const node of [...nodes, ...macros]) {
@@ -306,16 +318,18 @@ export function buildProjectTree(
 				? `${node.name}_v${node.version}`
 				: node.name;
 
-		const current = root;
+		let current = root;
+
 		for (const segment of dirPath) {
-			let folder = current[segment] as TreeFolder<FilterProjectNode | MacroValues> | undefined;
-			if (!folder) {
-				folder = { type: 'folder', name: segment, active: false, items: [] };
-				current[segment] = folder;
-			}
-			if (folder.type !== 'folder') throw new Error(`Path collision at ${segment}`);
+			const folder = getOrCreateFolder(current, segment);
 			if (isActive) folder.active = true;
-			// current = folder.items;
+
+			// lazily create a children record for building
+			if (!(folder as any).children) {
+				(folder as any).children = {} as Record<string, TreeItem<FilterProjectNode | MacroValues>>;
+			}
+
+			current = (folder as any).children;
 		}
 
 		current[fileName] = {
@@ -328,7 +342,25 @@ export function buildProjectTree(
 		};
 	}
 
-	return normalizeTree(Object.values(root));
+	// recursively collapse folders and remove children
+	const collapse = (
+		map: Record<string, TreeItem<FilterProjectNode | MacroValues>>
+	): TreeItem<FilterProjectNode | MacroValues>[] =>
+		Object.values(map).map((item) => {
+			if (item.type === 'folder') {
+				const children = (item as any).children as
+					| Record<string, TreeItem<FilterProjectNode | MacroValues>>
+					| undefined;
+
+				if (children) {
+					item.items = collapse(children);
+					delete (item as any).children;
+				}
+			}
+			return item;
+		});
+
+	return normalizeTree(collapse(root) as TreeFolder<FilterProjectNode | MacroValues>[]);
 }
 
 /**
@@ -345,7 +377,7 @@ export function buildProjectTree(
 export function buildDatabaseTree(
 	nodes: FilterProjectNode[],
 	select?: string
-): TreeItem<FilterProjectNode>[] {
+): TreeFolder<FilterProjectNode>[] {
 	const databases: Record<string, TreeFolder<FilterProjectNode>> = {};
 	type DatabaseProjectNode = Extract<
 		FilterProjectNode,
@@ -437,7 +469,7 @@ export function buildDatabaseTree(
 export function buildGroupTree(
 	nodes: FilterProjectNode[],
 	select?: string
-): TreeItem<FilterProjectNode>[] {
+): TreeFolder<FilterProjectNode>[] {
 	const groups: Record<string, TreeFolder<FilterProjectNode>> = {};
 
 	for (const node of nodes) {
