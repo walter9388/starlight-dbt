@@ -147,18 +147,18 @@ function normalizeTree<T>(items: TreeItem<T>[]): TreeItem<T>[] {
 }
 
 /**
- * Builds a tree of folders grouped by a derived key.
+ * Build a grouped folder → file tree from a flat list of nodes.
  *
- * Used for flat resources such as sources, exposures, metrics, etc.
- * Each group becomes a folder containing file nodes.
+ * Nodes are grouped using a derived key. Each group becomes a folder
+ * containing file items for the nodes in that group.
  *
- * @typeParam T - Node type
- * @param nodes - Nodes to group
- * @param groupKey - Function producing a group name for a node
- * @param nodeType - Resource type string for UI consumption
- * @param select - Optional unique_id to mark a node active
- * @param labelKey - Optional property name used as display label
- * @returns Array of grouped TreeItems
+ * @typeParam T - Node type being grouped
+ * @param nodes - Flat list of nodes to group
+ * @param groupKey - Function that derives the folder name for a node
+ * @param nodeType - UI node type for file items
+ * @param select - Optional unique_id to mark a node (and its parent) active
+ * @param labelKey - Optional property to use as the file label instead of `name`
+ * @returns Sorted folder TreeItems with sorted file children
  */
 function buildGroupedTree<
 	T extends SourceValues | ExposureValues | MetricValues | SemanticModelValues | SavedQueryValues,
@@ -198,10 +198,26 @@ function buildGroupedTree<
 		.sort((a, b) => a.name.localeCompare(b.name));
 }
 
+/**
+ * Build a tree of sources grouped by `source_name`.
+ *
+ * @param nodes - Source nodes from the project manifest
+ * @param select - Optional unique_id to mark a source (and its folder) active
+ * @returns Tree of source folders containing file items
+ */
 export function buildSourceTree(nodes: SourceValues[], select?: string): TreeItem<SourceValues>[] {
 	return buildGroupedTree(nodes, (n) => n.source_name, 'source', select);
 }
 
+/**
+ * Build a tree of exposures grouped by type.
+ *
+ * Groups by capitalized `type`, falling back to `Uncategorized`.
+ *
+ * @param nodes - Exposure nodes from the project manifest
+ * @param select - Optional unique_id to mark an exposure (and its folder) active
+ * @returns Tree of exposure folders containing file items
+ */
 export function buildExposureTree(
 	nodes: ExposureValues[],
 	select?: string
@@ -215,10 +231,26 @@ export function buildExposureTree(
 	);
 }
 
+/**
+ * Build a tree of metrics grouped by `package_name`.
+ *
+ * Uses the metric `label` as the display name when available.
+ *
+ * @param nodes - Metric nodes from the project manifest
+ * @param select - Optional unique_id to mark a metric (and its folder) active
+ * @returns Tree of metric folders containing file items
+ */
 export function buildMetricTree(nodes: MetricValues[], select?: string): TreeItem<MetricValues>[] {
 	return buildGroupedTree(nodes, (n) => n.package_name, 'metric', select, 'label');
 }
 
+/**
+ * Build a tree of semantic models grouped by `package_name`.
+ *
+ * @param nodes - Semantic model nodes from the project manifest
+ * @param select - Optional unique_id to mark a model (and its folder) active
+ * @returns Tree of semantic model folders containing file items
+ */
 export function buildSemanticModelTree(
 	nodes: SemanticModelValues[],
 	select?: string
@@ -226,6 +258,13 @@ export function buildSemanticModelTree(
 	return buildGroupedTree(nodes, (n) => n.package_name, 'semantic_model', select);
 }
 
+/**
+ * Build a tree of saved queries grouped by `package_name`.
+ *
+ * @param nodes - Saved query nodes from the project manifest
+ * @param select - Optional unique_id to mark a query (and its folder) active
+ * @returns Tree of saved query folders containing file items
+ */
 export function buildSavedQueryTree(
 	nodes: SavedQueryValues[],
 	select?: string
