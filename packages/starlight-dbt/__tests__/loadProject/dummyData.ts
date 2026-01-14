@@ -1,4 +1,4 @@
-import type { ManifestArtifact, CatalogArtifact } from '../../utils/load/types';
+import type { ManifestArtifact, CatalogArtifact } from '../../lib/load/types';
 
 export const testManifest: ManifestArtifact = {
 	metadata: {

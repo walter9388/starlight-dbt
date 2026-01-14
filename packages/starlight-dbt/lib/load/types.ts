@@ -53,6 +53,21 @@ type ManifestSemanticModel = ManifestArtifact['semantic_models'][string];
 type ManifestSavedQuery = ManifestArtifact['saved_queries'][string];
 type ManifestUnitTest = ManifestArtifact['unit_tests'][string] & { label?: string };
 type ManifestMacros = ManifestArtifact['macros'];
+// type ManifestSeed = Extract<ManifestArtifact['nodes'][string], { resource_type: 'seed' }>;
+// type ManifestAnalysis = Extract<ManifestArtifact['nodes'][string], { resource_type: 'analysis' }>;
+// type ManifestSingularTest = Extract<ManifestArtifact['nodes'][string], { resource_type: 'test' }>;
+// type ManifestHookNode = Extract<ManifestArtifact['nodes'][string], { resource_type: 'hooknode' }>;
+// type ManifestModel = Extract<ManifestArtifact['nodes'][string], { resource_type: 'model' }>;
+// type ManifestSqlOperation = Extract<
+// 	ManifestArtifact['nodes'][string],
+// 	{ resource_type: 'sqloperation' }
+// >;
+// type ManifestGenericTest = Extract<
+// 	ManifestArtifact['nodes'][string],
+// 	{ resource_type: 'generictest' }
+// >;
+// type ManifestSnapshot = Extract<ManifestArtifact['nodes'][string], { resource_type: 'snapshot' }>;
+// type ManifestFunction = Extract<ManifestArtifact['nodes'][string], { resource_type: 'function' }>;
 export type AugmentedMacro = ManifestMacros[string] & {
 	impls?: Record<string, string>;
 	is_adapter_macro?: boolean;

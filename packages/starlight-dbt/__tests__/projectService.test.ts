@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import { describe, it, expect } from 'vitest';
 
-import { createProjectService } from '../utils/projectService';
+import { createProjectService } from '../lib/projectService';
 
 describe('Project service', () => {
 	it('loads manifest and catalog and initializes project', async () => {
