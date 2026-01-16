@@ -19,6 +19,7 @@ pnpm-debug.log*
 
 # Vitest
 __coverage__/
+coverage/
 
 # Playwright
 test-results/
