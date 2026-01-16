@@ -2,8 +2,8 @@ import path from 'node:path';
 import { describe, it, expect } from 'vitest';
 
 import { testManifest, testCatalog } from './dummyData';
-import { createProjectService } from '../../utils/projectService';
-import { isFolder } from '../../utils/load/buildNodeTrees';
+import { createProjectService } from '../../lib/projectService';
+import { isFolder } from '../../lib/load/buildNodeTrees';
 
 type TestCase = {
 	name: string;

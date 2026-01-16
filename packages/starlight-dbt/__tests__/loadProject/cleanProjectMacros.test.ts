@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { consolidateAdapterMacros, cleanProjectMacros } from '../../utils/load/cleanProjectMacros';
+import { consolidateAdapterMacros, cleanProjectMacros } from '../../lib/load/cleanProjectMacros';
 
 describe('consolidateAdapterMacros', () => {
 	it('groups adapter implementations under the base adapter macro', () => {

@@ -1,0 +1,23 @@
+---
+// dbtPageTemplate.astro
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+// @ts-ignore
+import { dbtData } from 'virtual:dbt-data';
+
+export async function getStaticPaths() {
+	// Generate a page for every node in dbtData
+	return Object.values(dbtData.nodes).map((node: any) => {
+		return {
+			params: { slug: node.unique_id }, // This becomes /docs/dbt/model.my_project.my_model
+			props: { node },
+		};
+	});
+}
+
+const { node } = Astro.props;
+---
+
+<StarlightPage frontmatter={{ title: node.name }}>
+	<p>This page was generated statically for {node.unique_id}</p>
+	<pre>{JSON.stringify(node, null, 2)}</pre>
+</StarlightPage>

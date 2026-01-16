@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 import { testManifest, testCatalog } from './dummyData';
-import { match_dict_keys, incorporate_catalog } from '../../utils/load/incorporateCatalog';
+import { match_dict_keys, incorporate_catalog } from '../../lib/load/incorporateCatalog';
 
 describe('match_dict_keys', () => {
 	it('maps keys case-insensitively to destination keys and preserves unmatched keys', () => {

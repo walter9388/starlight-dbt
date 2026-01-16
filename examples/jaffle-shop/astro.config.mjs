@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import dbtPlugin from 'starlight-dbt';
 
 // https://astro.build/config
 export default defineConfig({
@@ -21,6 +22,7 @@ export default defineConfig({
 					autogenerate: { directory: 'reference' },
 				},
 			],
+			plugins: [dbtPlugin()],
 		}),
 	],
 });
