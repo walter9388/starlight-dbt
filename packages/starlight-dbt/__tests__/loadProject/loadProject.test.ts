@@ -1,9 +1,9 @@
 import path from 'node:path';
+
 import { describe, it, expect } from 'vitest';
 
-import { testManifest, testCatalog } from './dummyData';
-import { createProjectService } from '../../lib/projectService';
 import { isFolder } from '../../lib/load/buildNodeTrees';
+import { createProjectService } from '../../lib/projectService';
 
 type TestCase = {
 	name: string;
@@ -13,8 +13,19 @@ type TestCase = {
 describe('loadProject (integration)', () => {
 	const cases: TestCase[] = [
 		{
-			name: 'in-memory dummy artifacts',
-			createService: () => createProjectService(testManifest as any, testCatalog as any),
+			name: 'basic dbt fixture',
+			createService: () => {
+				const manifestPath = path.resolve(
+					process.cwd(),
+					'__e2e__/fixtures/basics/dbt-artifacts/manifest.json'
+				);
+				const catalogPath = path.resolve(
+					process.cwd(),
+					'__e2e__/fixtures/basics/dbt-artifacts/catalog.json'
+				);
+
+				return createProjectService(manifestPath, catalogPath);
+			},
 		},
 		{
 			name: 'real dbt artifacts (jaffle shop)',

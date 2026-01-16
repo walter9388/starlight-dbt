@@ -1,7 +1,9 @@
+import path from 'node:path';
+
 import { describe, it, expect } from 'vitest';
 
-import { testManifest, testCatalog } from './dummyData';
 import { match_dict_keys, incorporate_catalog } from '../../lib/load/incorporateCatalog';
+import { loadManifestV12, loadCatalogV1 } from '../../lib/load/loadArtifacts';
 
 describe('match_dict_keys', () => {
 	it('maps keys case-insensitively to destination keys and preserves unmatched keys', () => {
@@ -17,7 +19,18 @@ describe('match_dict_keys', () => {
 });
 
 describe('incorporate_catalog', () => {
-	it('copies sources into nodes and remaps column keys to catalog column names', () => {
+	it('copies sources into nodes and remaps column keys to catalog column names', async () => {
+		const testManifestPath = path.resolve(
+			process.cwd(),
+			'__e2e__/fixtures/basics/dbt-artifacts/manifest.json'
+		);
+		const testCatalogPath = path.resolve(
+			process.cwd(),
+			'__e2e__/fixtures/basics/dbt-artifacts/catalog.json'
+		);
+		const testManifest = await loadManifestV12(testManifestPath);
+		const testCatalog = await loadCatalogV1(testCatalogPath);
+
 		const merged = incorporate_catalog(testManifest, testCatalog);
 
 		// catalog sources should be copied into nodes
