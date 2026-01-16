@@ -15,8 +15,9 @@ import type { CatalogArtifact, ManifestArtifact } from './types';
  * @param obj - Source object whose keys should be matched
  * @returns A new object with keys mapped to the matching keys from `dest_keys`
  */
-export function match_dict_keys(dest_keys: string[], obj: any) {
-	const new_obj: any = {};
+export function match_dict_keys<T>(dest_keys: string[], obj?: Record<string, T>) {
+	const new_obj: Record<string, T> = {};
+	if (!obj) return new_obj;
 
 	Object.entries(obj).forEach(([key, value]) => {
 		const desired_key = dest_keys.find((k) => k.toLowerCase() === key.toLowerCase());

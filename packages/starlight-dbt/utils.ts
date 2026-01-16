@@ -1,7 +1,8 @@
-import type { StarlightDbtOptions } from './config';
-import { fileURLToPath } from 'node:url';
-import path from 'node:path';
 import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import type { StarlightDbtOptions } from './config';
 
 export const getPageTemplatePath = (config: StarlightDbtOptions): string => {
 	const dbtPageTemplateName = 'dbtPageTemplate.astro';

@@ -1,10 +1,10 @@
-import type { StarlightPlugin } from '@astrojs/starlight/types';
-
 import { AstroError } from 'astro/errors';
 
 import { StarlightDbtOptionsSchema, type StarlightDbtUserOptions } from './config';
 import { createProjectService } from './lib/projectService';
 import { getPageTemplatePath } from './utils';
+
+import type { StarlightPlugin } from '@astrojs/starlight/types';
 
 export type { StarlightDbtOptions } from './config';
 
@@ -20,7 +20,7 @@ export default function starlightDbtPlugin(userOptions?: StarlightDbtUserOptions
 	return {
 		name: 'starlight-dbt-plugin',
 		hooks: {
-			async 'config:setup'({ addIntegration, logger }) {
+			'config:setup'({ addIntegration, logger }) {
 				logger.info(`Using manifest: ${config.manifest}`);
 				logger.info(`Using catalog: ${config.catalog}`);
 

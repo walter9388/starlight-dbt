@@ -34,7 +34,7 @@ export function createProjectService(manifestInput: JsonInput, catalogInput: Jso
 		 */
 		init: async function () {
 			await loadProject(this, manifestInput, catalogInput);
-			await populateModelTree(this);
+			populateModelTree(this);
 			this.loaded = true;
 		},
 	};

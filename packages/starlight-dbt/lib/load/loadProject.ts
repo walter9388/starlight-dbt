@@ -250,7 +250,7 @@ export const loadProject = async function (
  * @param service - The `ProjectService` instance containing project nodes, macros, and tree storage
  * @returns Promise<void> that resolves when all trees have been populated
  */
-export const populateModelTree = async function (service: ProjectService) {
+export const populateModelTree = function (service: ProjectService) {
 	// get nodes/macros from service.project
 	const acceptedNodeTypes = [
 		'snapshot',
