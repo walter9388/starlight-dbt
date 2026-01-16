@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    name: Release
+    if: github.repository_owner == 'walter9388'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v6
+        with:
+          # Fetch full history for correct changelogs
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          cache: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      - name: Install Dependencies
+        run: pnpm install
+
+      - name: Create Release Pull Request or Publish
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          version: pnpm run version
+          publish: pnpm run release
+          title: "ci(release)"
+          commit: "ci(release)"
+        env:
+          GITHUB_TOKEN: ${{ secrets.CHANGESET_TOKEN }}
+          NPM_TOKEN: "" # empty/removed because OIDC is active
+
