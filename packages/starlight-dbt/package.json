@@ -21,11 +21,18 @@
     "astro-integration"
   ],
   "main": "./index.ts",
+  "types": "./index.ts",
   "files": [
     "index.ts",
+    "virtual.d.ts",
     "components",
-    "utils"
+    "lib"
   ],
+  "exports": {
+    ".": "./index.ts",
+    "./virtual": "./virtual.d.ts",
+    "./types": "./lib/load/types.ts"
+  },
   "peerDependencies": {
     "@astrojs/starlight": ">=0.30.0"
   },

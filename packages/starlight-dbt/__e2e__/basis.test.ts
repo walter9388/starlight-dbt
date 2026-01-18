@@ -7,7 +7,7 @@ test.describe('Pages', () => {
 		test('confirm starlight example.md page renders correctly', async ({ page, getProdServer }) => {
 			const starlight = await getProdServer();
 
-			// 1. Navigate and capture the response
+			// Navigate and capture the response
 			const response = await starlight.goto('/examples/example1');
 			expect(response?.ok()).toBe(true);
 
@@ -22,6 +22,20 @@ test.describe('Pages', () => {
 
 			// Confirm the status is actually 404
 			expect(response?.status()).toBe(404);
+		});
+	});
+
+	test.describe('dbt', () => {
+		test('renders a dbt model page', async ({ page, getProdServer }) => {
+			const starlight = await getProdServer();
+
+			// Navigate and capture the response
+			const response = await starlight.goto('/dbt/model.test_pkg.model_node');
+			expect(response?.ok()).toBe(true);
+
+			// Ensure the Markdown heading exists
+			const heading = page.locator('h1');
+			await expect(heading).toContainText('model_node');
 		});
 	});
 });

@@ -1,7 +1,9 @@
-import type { StarlightDbtOptions } from './config';
-import { fileURLToPath } from 'node:url';
-import path from 'node:path';
 import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import type { StarlightDbtOptions } from './config';
+import type { AstroConfig } from 'astro';
 
 export const getPageTemplatePath = (config: StarlightDbtOptions): string => {
 	const dbtPageTemplateName = 'dbtPageTemplate.astro';
@@ -22,4 +24,8 @@ export const getPageTemplatePath = (config: StarlightDbtOptions): string => {
 			: internalTemplate; // Fallback to plugin default
 
 	return entrypoint;
+};
+
+export const getDbtArtifactsPath = (filepath: string, astroConfig: AstroConfig): string => {
+	return path.resolve(fileURLToPath(astroConfig.root), filepath);
 };

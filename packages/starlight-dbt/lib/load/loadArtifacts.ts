@@ -27,7 +27,7 @@ async function loadJson(input: JsonInput, label: string): Promise<Record<string,
 		try {
 			contents = await readFile(filePath, 'utf8');
 		} catch (err) {
-			throw new Error(`Failed to read ${label} file at "${filePath}"`);
+			throw new Error(`Failed to read ${label} file at "${filePath}": ${(err as Error).message}`);
 		}
 
 		try {

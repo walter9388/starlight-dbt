@@ -1,10 +1,10 @@
-import type { StarlightPlugin } from '@astrojs/starlight/types';
-
 import { AstroError } from 'astro/errors';
 
 import { StarlightDbtOptionsSchema, type StarlightDbtUserOptions } from './config';
 import { createProjectService } from './lib/projectService';
-import { getPageTemplatePath } from './utils';
+import { getDbtArtifactsPath, getPageTemplatePath } from './utils';
+
+import type { StarlightPlugin } from '@astrojs/starlight/types';
 
 export type { StarlightDbtOptions } from './config';
 
@@ -20,7 +20,7 @@ export default function starlightDbtPlugin(userOptions?: StarlightDbtUserOptions
 	return {
 		name: 'starlight-dbt-plugin',
 		hooks: {
-			async 'config:setup'({ addIntegration, logger }) {
+			'config:setup'({ addIntegration, astroConfig, logger }) {
 				logger.info(`Using manifest: ${config.manifest}`);
 				logger.info(`Using catalog: ${config.catalog}`);
 
@@ -32,7 +32,10 @@ export default function starlightDbtPlugin(userOptions?: StarlightDbtUserOptions
 							const resolvedVirtualModuleId = '\0' + virtualModuleId;
 
 							// load manifest and catalog files from local filesystem
-							const service = createProjectService(config.manifest, config.catalog);
+							const service = createProjectService(
+								getDbtArtifactsPath(config.manifest, astroConfig),
+								getDbtArtifactsPath(config.catalog, astroConfig)
+							);
 							await service.init();
 
 							injectRoute({
@@ -47,12 +50,13 @@ export default function starlightDbtPlugin(userOptions?: StarlightDbtUserOptions
 											name: 'vite-plugin-dbt-data',
 											resolveId(id) {
 												if (id === virtualModuleId) return resolvedVirtualModuleId;
+												return null;
 											},
 											load(id) {
 												if (id === resolvedVirtualModuleId) {
-													// Export the data as a stringified JS object
-													return `export const dbtData = ${JSON.stringify(service.project)};`;
+													return `export const dbtData = ${JSON.stringify(service)};`;
 												}
+												return null;
 											},
 										},
 									],

@@ -7,11 +7,11 @@ import type {
 	CatalogArtifact,
 	JsonInput,
 	ManifestArtifact,
-	ProjectService,
+	dbtData,
 } from './load/types';
 
 export function createProjectService(manifestInput: JsonInput, catalogInput: JsonInput) {
-	const service: ProjectService = {
+	const service: dbtData = {
 		project: {} as AugmentedManifestArtifact & AugmentedCatalogArtifact,
 		tree: {
 			project: [],
@@ -34,7 +34,7 @@ export function createProjectService(manifestInput: JsonInput, catalogInput: Jso
 		 */
 		init: async function () {
 			await loadProject(this, manifestInput, catalogInput);
-			await populateModelTree(this);
+			populateModelTree(this);
 			this.loaded = true;
 		},
 	};
