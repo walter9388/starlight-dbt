@@ -6,7 +6,7 @@ Beautiful, customisable, high-performance dbt docs using Starlight (Astro)
 
 - [x] Translate dbt-docs build code into modern modular typescript.
 - [x] work out how to do changelog / cicd npm deploy
-- [ ] Structure out basic plugin structure, and get basic code working so that models generate pages in dev/build (use vite virtual modules?)
+- [x] Structure out basic plugin structure, and get basic code working so that models generate pages in dev/build (use vite virtual modules?)
 - [ ] Add project/database/group to sidebar as dymanic custom component.
 - [ ] Make `dbtPageTemplate.astro` work well.
 - [ ] sort out cicd (formatting, linting, testing)
