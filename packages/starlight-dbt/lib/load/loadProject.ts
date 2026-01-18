@@ -10,10 +10,8 @@ import {
 	buildSemanticModelTree,
 	buildSourceTree,
 } from './buildNodeTrees';
-import { cleanProjectMacros } from './cleanProjectMacros';
-import { getQuoteChar } from './compat';
-import { incorporate_catalog } from './incorporateCatalog';
 import { loadManifestV12, loadCatalogV1 } from './loadArtifacts';
+import { cleanProjectMacros, incorporate_catalog, getQuoteChar } from './utils';
 
 import type {
 	AugmentedMacros,
