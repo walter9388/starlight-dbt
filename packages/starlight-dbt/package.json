@@ -24,10 +24,15 @@
   "types": "./index.ts",
   "files": [
     "index.ts",
+    "virtual.d.ts",
     "components",
-    "lib",
-    "types"
+    "lib"
   ],
+  "exports": {
+    ".": "./index.ts",
+    "./virtual": "./virtual.d.ts",
+    "./types": "./lib/load/types.ts"
+  },
   "peerDependencies": {
     "@astrojs/starlight": ">=0.30.0"
   },

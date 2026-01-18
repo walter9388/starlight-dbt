@@ -1,11 +1,7 @@
 ---
 // dbtPageTemplate.astro
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-
-// TODO: fix typing on dbtData to work natively with virtual-dbt-data.d.ts file, and remove this cast
-import { dbtData as dbtDataUntyped } from 'virtual:dbt-data';
-import type { dbtData } from '../lib/load/types';
-const dbtData = dbtDataUntyped as dbtData;
+import { dbtData } from 'virtual:dbt-data';
 
 export async function getStaticPaths() {
 	// Generate a page for every node in dbtData

@@ -1,4 +1,4 @@
 declare module 'virtual:dbt-data' {
-	import type { dbtData } from '../lib/load/types';
+	import { dbtData } from 'starlight-dbt/types'
 	export const dbtData: dbtData;
 }
