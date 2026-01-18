@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { describe, it, expect, test } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 import { loadManifestV12, loadCatalogV1 } from '../../lib/load/loadArtifacts';
 import {
@@ -179,7 +179,7 @@ describe('incorporate_catalog', () => {
 describe('getQuoteChar', () => {
 	const BACKTICK = '`';
 	const QUOTE = '"';
-	
+
 	it('column quoting', () => {
 		expect(getQuoteChar({ adapter_type: 'bigquery' })).toStrictEqual(BACKTICK);
 		expect(getQuoteChar({ adapter_type: 'spark' })).toStrictEqual(BACKTICK);
