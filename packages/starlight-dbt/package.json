@@ -1,6 +1,6 @@
 {
   "name": "starlight-dbt",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A Starlight plugin for dbt docs integration",
   "author": "Alex Waldron <walter93@hotmail.co.uk> (https://github.com/walter9388)",
   "type": "module",
