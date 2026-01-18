@@ -16,7 +16,7 @@ export async function getStaticPaths() {
 const { node } = Astro.props;
 ---
 
-<StarlightPage frontmatter={{ title: node.name }}>
+<StarlightPage frontmatter={{ title: node.name || node.metadata.name }}>
 	<p>This page was generated statically for {node.unique_id}</p>
 	<pre>{JSON.stringify(node, null, 2)}</pre>
 </StarlightPage>

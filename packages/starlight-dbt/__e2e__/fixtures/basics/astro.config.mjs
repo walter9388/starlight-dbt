@@ -1,5 +1,6 @@
 import starlight from '@astrojs/starlight';
 import { defineConfig } from 'astro/config';
+import dbtPlugin from 'starlight-dbt';
 
 export default defineConfig({
 	integrations: [
@@ -12,7 +13,7 @@ export default defineConfig({
 					autogenerate: { directory: 'examples' },
 				},
 			],
-			// plugins: [dbtPlugin()],
+			plugins: [dbtPlugin()],
 		}),
 	],
 });
