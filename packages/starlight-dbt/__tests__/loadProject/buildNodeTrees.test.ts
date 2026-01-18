@@ -13,7 +13,7 @@ import {
 	assertFolder,
 } from '../../lib/load/buildNodeTrees';
 
-import type { TreeFolder, TreeFile } from '../../lib/load/types';
+import type { TreeFolder, TreeFile } from 'starlight-dbt/types';
 
 describe('buildSourceTree', () => {
 	it('groups sources by source_name, sorts and marks active selection', () => {

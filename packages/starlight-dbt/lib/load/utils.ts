@@ -8,7 +8,7 @@ import type {
 	ManifestMetadata,
 	AugmentedMacro,
 	AugmentedMacros,
-} from './types';
+} from 'starlight-dbt/types';
 
 /**
  * Consolidate adapter macros by grouping them and marking implementations per adapter.

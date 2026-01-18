@@ -9,7 +9,7 @@ import type {
 	TreeFolder,
 	TreeItem,
 	TreeNodeType,
-} from './types';
+} from 'starlight-dbt/types';
 
 /**
  * Capitalizes the first character of a string.

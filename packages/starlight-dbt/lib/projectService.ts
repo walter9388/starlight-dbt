@@ -8,7 +8,7 @@ import type {
 	JsonInput,
 	ManifestArtifact,
 	dbtData,
-} from './load/types';
+} from 'starlight-dbt/types';
 
 export function createProjectService(manifestInput: JsonInput, catalogInput: JsonInput) {
 	const service: dbtData = {

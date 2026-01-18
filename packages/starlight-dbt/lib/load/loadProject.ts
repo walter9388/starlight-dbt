@@ -23,7 +23,7 @@ import type {
 	dbtData,
 	TestInfo,
 	FilterProjectNode,
-} from './types';
+} from 'starlight-dbt/types';
 
 /**
  * Load and augment a dbt project from manifest and catalog inputs.
