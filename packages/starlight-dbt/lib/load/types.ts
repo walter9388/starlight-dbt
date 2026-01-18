@@ -156,7 +156,7 @@ export type FilterProjectNode =
 	  >
 	| SingularTest;
 
-export interface ProjectService {
+export interface dbtData {
 	project: Project;
 	tree: {
 		project: TreeFolder<FilterProjectNode | MacroValues>[];

@@ -47,12 +47,13 @@ export default function starlightDbtPlugin(userOptions?: StarlightDbtUserOptions
 											name: 'vite-plugin-dbt-data',
 											resolveId(id) {
 												if (id === virtualModuleId) return resolvedVirtualModuleId;
+												return null;
 											},
 											load(id) {
 												if (id === resolvedVirtualModuleId) {
-													// Export the data as a stringified JS object
-													return `export const dbtData = ${JSON.stringify(service.project)};`;
+													return `export const dbtData = ${JSON.stringify(service)};`;
 												}
+												return null;
 											},
 										},
 									],

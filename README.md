@@ -13,6 +13,9 @@ Beautiful, customisable, high-performance dbt docs using Starlight (Astro)
 - [ ] sort out older versions of dbt manifest
 - [ ] Add option to markdown config for it to be before or after dbt component.
 - [ ] S3 content population
+- [ ] Improve internal typing
+  - [ ] redefine a lot of the manifest/catalog schema types explicitly
+  - [ ] get the typing on the virtual model to work (i.e. `virtual:dbt-data`)
 - [ ] Add multiple dbt projects / packages?
 - [ ] Versioning (sidebar vs entire page)?
 - [ ] Search
