@@ -40,6 +40,7 @@ export default function starlightDbtPlugin(userOptions?: StarlightDbtUserOptions
 					getDbtArtifactsAbsolutePath(config.catalog, astroConfig)
 				);
 				await service.init();
+				service.create_id_map();
 
 				try {
 					const dbtDatabaseSidebar = getDatabaseSidebar(service.tree.database, config.basePath);

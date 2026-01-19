@@ -38,10 +38,9 @@ test.describe('Pages', () => {
 				expected: 'protected_model',
 			},
 			{ type: 'private model', id: 'model.test_pkg.private_model', expected: 'private_model' },
-			{ type: 'hidden model', id: 'model.test_pkg.hidden_node', expected: 'hidden_node' },
 			{ type: 'macro', id: 'macro.test_pkg.macro1', expected: 'macro1' },
 			{ type: 'exposure', id: 'exposure.test_pkg.exposure1', expected: 'exposure1' },
-			{ type: 'metric', id: 'metric.test_pkg.metric1', expected: 'metric1' },
+			{ type: 'metric', id: 'metric.test_pkg.metric1', expected: 'Metric 1' }, // uses label
 			{ type: 'semantic model', id: 'semantic_model.test_pkg.sm1', expected: 'sm1' },
 			{ type: 'saved query', id: 'saved_query.test_pkg.sq1', expected: 'sq1' },
 			{ type: 'unit test', id: 'unit_test.test_pkg.unit_test_1', expected: 'unit_test_1' },
@@ -59,6 +58,15 @@ test.describe('Pages', () => {
 					await expect(heading).toContainText(expected);
 				});
 			}
+		});
+
+		test.describe('dbt dynamic page ignores hidden modles', () => {
+			test('does not render hidden model page', async ({ getProdServer }) => {
+				const starlight = await getProdServer();
+
+				const response = await starlight.goto('/dbt/model.test_pkg.hidden_model');
+				expect(response?.status()).toBe(404);
+			});
 		});
 	});
 });

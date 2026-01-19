@@ -7,8 +7,10 @@ import type {
 	MacroValues,
 	FilterProjectNode,
 	TreeFolder,
+	TreeFile,
 	TreeItem,
 	TreeNodeType,
+	UnitTestValues,
 } from 'starlight-dbt/types';
 
 /**
@@ -97,7 +99,7 @@ function normalizeTree<T extends TreeItem<unknown>>(items: T[]): T[] {
  * @returns Sorted folder TreeItems with sorted file children
  */
 function buildGroupedTree<
-	T extends SourceValues | ExposureValues | MetricValues | SemanticModelValues | SavedQueryValues,
+	T extends SourceValues | ExposureValues | MetricValues | SemanticModelValues | SavedQueryValues | UnitTestValues,
 >(
 	nodes: T[],
 	groupKey: (node: T) => string,
@@ -212,6 +214,20 @@ export function buildSavedQueryTree(
 	select?: string
 ): TreeFolder<SavedQueryValues>[] {
 	return buildGroupedTree(nodes, (n) => n.package_name, 'saved_query', select);
+}
+
+/**
+ * Build a tree of unit tests grouped by their test type.
+ *
+ * @param nodes - Unit test nodes from the project manifest
+ * @param select - Optional unique_id to mark a test (and its folder) active
+ * @returns Tree of unit test folders containing file items
+ */
+export function buildUnitTestTree(
+	nodes: UnitTestValues[],
+	select?: string	
+): TreeFolder<UnitTestValues>[] {
+	return buildGroupedTree(nodes, (n) => n.package_name, 'test', select);
 }
 
 /**
@@ -395,7 +411,6 @@ export function buildDatabaseTree(
  * @param select - Optional unique_id to mark a node active
  * @returns Grouped tree of models
  */
-
 export function buildGroupTree(
 	nodes: FilterProjectNode[],
 	select?: string
@@ -450,4 +465,29 @@ export function buildGroupTree(
 	}
 
 	return normalizeTree(Object.values(groups));
+}
+
+/**
+ * Flattens a resource tree into a lookup record keyed by unique_id.
+ *
+ * - Traverses nested items recursively to find all leaf nodes
+ * - Enables $O(1)$ constant-time access to any node by its ID
+ * - Preserves original node references for memory efficiency
+ *
+ * @param items - Array of nested TreeItems
+ * @param map - Accumulator for recursion (defaults to empty)
+ * @returns Record of unique_id to TreeFile
+ */
+export function createNodeMap<T>(
+	items: TreeItem<T>[],
+	map: Record<string, TreeFile<T>> = {}
+): Record<string, TreeFile<T>> {
+	for (const item of items) {
+		if ('items' in item) {
+			createNodeMap(item.items, map);
+		} else {
+			map[item.unique_id] = item;
+		}
+	}
+	return map;
 }

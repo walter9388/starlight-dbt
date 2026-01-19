@@ -9,6 +9,7 @@ import {
 	buildSavedQueryTree,
 	buildSemanticModelTree,
 	buildSourceTree,
+	buildUnitTestTree,
 } from './buildNodeTrees';
 import { loadManifestV12, loadCatalogV1 } from './loadArtifacts';
 import { cleanProjectMacros, incorporate_catalog, getQuoteChar } from './utils';
@@ -285,4 +286,5 @@ export const populateModelTree = function (service: dbtData) {
 		Object.values(service.project.semantic_models)
 	);
 	service.tree.saved_queries = buildSavedQueryTree(Object.values(service.project.saved_queries));
+	service.tree.unit_tests = buildUnitTestTree(Object.values(service.project.unit_tests));
 };
