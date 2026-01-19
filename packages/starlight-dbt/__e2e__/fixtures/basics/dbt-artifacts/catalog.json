@@ -17,7 +17,7 @@
         }
       },
       "stats": {},
-      "unique_id": "source.s1.source1"
+      "unique_id": "source.test_pkg.s1.source1"
     },
     "source2": {
       "metadata": {
@@ -33,7 +33,7 @@
         }
       },
       "stats": {},
-      "unique_id": "source.s2.source2"
+      "unique_id": "source.test_pkg.s2.source2"
     }
   },
   "nodes": {
