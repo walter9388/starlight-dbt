@@ -2,7 +2,7 @@ import { AstroError } from 'astro/errors';
 
 import { StarlightDbtOptionsSchema, type StarlightDbtUserOptions } from './config';
 import { createProjectService } from './lib/projectService';
-import { getDbtArtifactsPath, getPageTemplatePath } from './utils';
+import { getDbtArtifactsAbsolutePath, getPageTemplatePath, getDatabaseSidebar } from './utils';
 
 import type { StarlightPlugin } from '@astrojs/starlight/types';
 
@@ -20,29 +20,48 @@ export default function starlightDbtPlugin(userOptions?: StarlightDbtUserOptions
 	return {
 		name: 'starlight-dbt-plugin',
 		hooks: {
-			'config:setup'({ addIntegration, astroConfig, logger }) {
+			async 'config:setup'({
+				config: starlightConfig,
+				updateConfig,
+				addIntegration,
+				astroConfig,
+				logger,
+			}) {
 				logger.info(`Using manifest: ${config.manifest}`);
 				logger.info(`Using catalog: ${config.catalog}`);
+				const service = createProjectService(
+					getDbtArtifactsAbsolutePath(config.manifest, astroConfig),
+					getDbtArtifactsAbsolutePath(config.catalog, astroConfig)
+				);
+				await service.init();
+
+				try {
+					const dbtSidebar = getDatabaseSidebar(service.tree.database, config.basePath);
+					const currentSidebar = starlightConfig.sidebar ?? [];
+					currentSidebar.push(...dbtSidebar);
+
+					updateConfig({
+						sidebar: currentSidebar,
+					});
+				} catch (error) {
+					throwPluginError(
+						error instanceof Error
+							? error.message
+							: 'An error occurred while generating dbt sidebars.'
+					);
+				}
 
 				addIntegration({
 					name: 'starlight-dbt-integration',
 					hooks: {
 						'astro:config:setup': async ({ injectRoute, updateConfig }) => {
-							const virtualModuleId = 'virtual:dbt-data';
-							const resolvedVirtualModuleId = '\0' + virtualModuleId;
-
-							// load manifest and catalog files from local filesystem
-							const service = createProjectService(
-								getDbtArtifactsPath(config.manifest, astroConfig),
-								getDbtArtifactsPath(config.catalog, astroConfig)
-							);
-							await service.init();
-
 							injectRoute({
 								pattern: `${config.basePath}/[...slug]`,
 								entrypoint: getPageTemplatePath(config),
 							});
 
+							const virtualModuleId = 'virtual:dbt-data';
+							const resolvedVirtualModuleId = '\0' + virtualModuleId;
 							updateConfig({
 								vite: {
 									plugins: [
