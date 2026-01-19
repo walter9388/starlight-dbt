@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import type { StarlightDbtOptions } from './config';
 import type { HookParameters } from '@astrojs/starlight/types';
 import type { AstroConfig } from 'astro';
-import type { ProjectNode, TreeItem } from 'starlight-dbt/types';
+import type { ProjectNode, TreeItem, MacroValues } from 'starlight-dbt/types';
 
 export type StarlightUserConfig = HookParameters<'config:setup'>['config'];
 type SidebarItem = NonNullable<StarlightUserConfig['sidebar']>[number];
@@ -36,6 +36,27 @@ export const getDbtArtifactsAbsolutePath = (filepath: string, astroConfig: Astro
 };
 
 export function getDatabaseSidebar(tree: TreeItem<ProjectNode>[], baseUrl: string): SidebarItem[] {
+	return extractNestedSidebar(tree, baseUrl);
+}
+
+export function getProjectSidebar(
+	tree: TreeItem<ProjectNode | MacroValues>[],
+	baseUrl: string
+): SidebarItem[] {
+	return extractNestedSidebar(tree, baseUrl);
+}
+
+export function getGroupSidebar(
+	tree: TreeItem<ProjectNode | MacroValues>[],
+	baseUrl: string
+): SidebarItem[] {
+	return extractNestedSidebar(tree, baseUrl);
+}
+
+export function extractNestedSidebar(
+	tree: TreeItem<ProjectNode | MacroValues>[],
+	baseUrl: string
+): SidebarItem[] {
 	// Normalize the base URL (ensure leading slash, remove trailing slash)
 	const normalizedBase = baseUrl.startsWith('/') ? baseUrl : `/${baseUrl}`;
 	const cleanBase = normalizedBase.endsWith('/') ? normalizedBase.slice(0, -1) : normalizedBase;
@@ -44,7 +65,7 @@ export function getDatabaseSidebar(tree: TreeItem<ProjectNode>[], baseUrl: strin
 		if ('items' in item) {
 			return {
 				label: item.name,
-				items: getDatabaseSidebar(item.items, baseUrl),
+				items: extractNestedSidebar(item.items, baseUrl),
 				collapsed: true,
 			};
 		}
