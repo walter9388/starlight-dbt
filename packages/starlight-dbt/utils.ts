@@ -11,7 +11,7 @@ export type StarlightUserConfig = HookParameters<'config:setup'>['config'];
 type SidebarItem = NonNullable<StarlightUserConfig['sidebar']>[number];
 
 export const getPageTemplatePath = (config: StarlightDbtOptions): string => {
-	const dbtPageTemplateName = 'dbtPageTemplate.astro';
+	const dbtPageTemplateName = 'DbtPageTemplate.astro';
 
 	// 1. Resolve the path to the plugin's internal template (relative to this file)
 	const internalTemplate = fileURLToPath(

@@ -51,6 +51,10 @@ export default function starlightDbtPlugin(userOptions?: StarlightDbtUserOptions
 
 					updateConfig({
 						sidebar: currentSidebar,
+						components: {
+							...starlightConfig.components,
+							Sidebar: 'starlight-dbt/components/DbtSidebar.astro',
+						},
 					});
 				} catch (error) {
 					throwPluginError(

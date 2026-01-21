@@ -30,8 +30,8 @@
   ],
   "exports": {
     ".": "./index.ts",
-    "./virtual": "./virtual.d.ts",
-    "./types": "./lib/load/types.ts"
+    "./types": "./lib/load/types.ts",
+    "./components/DbtSidebar.astro": "./components/DbtSidebar.astro"
   },
   "peerDependencies": {
     "@astrojs/starlight": ">=0.30.0"
