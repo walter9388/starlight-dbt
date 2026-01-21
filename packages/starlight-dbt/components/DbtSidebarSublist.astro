@@ -5,6 +5,7 @@
 import { Badge, Icon } from '@astrojs/starlight/components';
 import SidebarRestorePoint from './SidebarRestorePoint.astro';
 import { getSidebarEntryMeta } from '../utils';
+import DbtSidebarRadioSwitcher from './DbtSidebarRadioSwitch.astro';
 
 // extract SidebarEntry and SidebarLink types from Astro.locals.starlightRoute.sidebar
 const { sidebar } = Astro.locals.starlightRoute;
@@ -76,19 +77,9 @@ const { sublist, nested } = Astro.props;
 							</summary>
 
 							{
-								// Three way radio switcher for dbt project/database/group views
-								isRoot && (
-									<div class="dbt-switcher">
-										<input type="radio" name="dbt-view" id="v-project" value="project" checked />
-										<label for="v-project">Project</label>
-
-										<input type="radio" name="dbt-view" id="v-database" value="database" />
-										<label for="v-database">Database</label>
-
-										<input type="radio" name="dbt-view" id="v-group" value="group" />
-										<label for="v-group">Group</label>
-									</div>
-								)
+								// new dbt radio switcher component at root level
+								// dbt-switcher CSS group is within this component
+								isRoot && <DbtSidebarRadioSwitcher />
 							}
 
 							<SidebarRestorePoint />
@@ -114,42 +105,6 @@ const { sublist, nested } = Astro.props;
      * or link that matches that specific dbt type.
      */
 	@layer dbt.filtering {
-		/* --- Switcher UI --- */
-		.dbt-switcher {
-			display: flex;
-			background: var(--sl-color-gray-6);
-			border-radius: 0.4rem;
-			padding: 0.2rem;
-			margin: 0.5rem var(--sl-sidebar-item-padding-inline);
-			gap: 0.2rem;
-			border: 1px solid var(--sl-color-hairline);
-		}
-
-		.dbt-switcher input {
-			display: none;
-		}
-
-		.dbt-switcher label {
-			flex: 1;
-			text-align: center;
-			font-size: 0.7rem;
-			padding: 0.25rem;
-			cursor: pointer;
-			border-radius: 0.25rem;
-			color: var(--sl-color-gray-3);
-			text-transform: uppercase;
-			letter-spacing: 0.05em;
-			transition:
-				background 0.2s,
-				color 0.2s;
-		}
-
-		.dbt-switcher input:checked + label {
-			background: var(--sl-color-accent-low);
-			color: var(--sl-color-white);
-			font-weight: 600;
-		}
-
 		/* --- Global Hidden State --- */
 		/* Targets anything tagged with a 'contains-' class or a direct dbt-type attribute */
 		.dbt-root-node li[class*='contains-'],
