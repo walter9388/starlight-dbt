@@ -5,7 +5,8 @@ import { fileURLToPath } from 'node:url';
 import type { StarlightDbtOptions } from './config';
 import type { HookParameters } from '@astrojs/starlight/types';
 import type { AstroConfig } from 'astro';
-import type { ProjectNode, TreeItem, MacroValues } from 'starlight-dbt/types';
+import type { ProjectNode, TreeItem, MacroValues, dbtData } from 'starlight-dbt/types';
+import { dbtRootIdentifierPrefix } from './constants';
 
 export type StarlightUserConfig = HookParameters<'config:setup'>['config'];
 type SidebarItem = NonNullable<StarlightUserConfig['sidebar']>[number];
@@ -35,27 +36,27 @@ export const getDbtArtifactsAbsolutePath = (filepath: string, astroConfig: Astro
 	return path.resolve(fileURLToPath(astroConfig.root), filepath);
 };
 
-export function getDatabaseSidebar(tree: TreeItem<ProjectNode>[], baseUrl: string): SidebarItem[] {
-	return extractNestedSidebar(tree, baseUrl);
-}
+export const getDbtSidebar = (
+	currentSidebar: SidebarItem[],
+	service: dbtData,
+	baseUrl: string,
+	dbtProjectName: string
+): SidebarItem[] => {
+	const dbtDatabaseSidebar = extractNestedSidebar(service.tree.database, baseUrl, 'database');
+	const dbtProjectSidebar = extractNestedSidebar(service.tree.project, baseUrl, 'project');
+	const dbtGroupsSidebar = extractNestedSidebar(service.tree.groups, baseUrl, 'group');
+	currentSidebar.push({
+		label: dbtRootIdentifierPrefix + dbtProjectName,
+		items: [...dbtDatabaseSidebar, ...dbtProjectSidebar, ...dbtGroupsSidebar],
+		collapsed: true,
+	});
+	return currentSidebar;
+};
 
-export function getProjectSidebar(
+function extractNestedSidebar(
 	tree: TreeItem<ProjectNode | MacroValues>[],
-	baseUrl: string
-): SidebarItem[] {
-	return extractNestedSidebar(tree, baseUrl);
-}
-
-export function getGroupSidebar(
-	tree: TreeItem<ProjectNode | MacroValues>[],
-	baseUrl: string
-): SidebarItem[] {
-	return extractNestedSidebar(tree, baseUrl);
-}
-
-export function extractNestedSidebar(
-	tree: TreeItem<ProjectNode | MacroValues>[],
-	baseUrl: string
+	baseUrl: string,
+	dbtTreeDataIdentifer: 'project' | 'database' | 'group'
 ): SidebarItem[] {
 	// Normalize the base URL (ensure leading slash, remove trailing slash)
 	const normalizedBase = baseUrl.startsWith('/') ? baseUrl : `/${baseUrl}`;
@@ -65,7 +66,7 @@ export function extractNestedSidebar(
 		if ('items' in item) {
 			return {
 				label: item.name,
-				items: extractNestedSidebar(item.items, baseUrl),
+				items: extractNestedSidebar(item.items, baseUrl, dbtTreeDataIdentifer),
 				collapsed: true,
 			};
 		}
@@ -73,6 +74,36 @@ export function extractNestedSidebar(
 		return {
 			label: item.name,
 			link: `${cleanBase}/${item.unique_id}`,
+			attrs: {
+				'data-dbt-type': dbtTreeDataIdentifer,
+				class: 'dbt-item',
+			},
 		};
 	});
+}
+
+// TODO: Improve typing here with Astro SidebarEntry type
+interface _SidebarEntry {
+	label?: string;
+	type: string;
+	attrs?: { [x: `data-${string}`]: any };
+	entries?: _SidebarEntry[];
+}
+export function getSidebarEntryMeta(entry: _SidebarEntry) {
+	const label = entry.label || '';
+	const isRoot = label.startsWith(dbtRootIdentifierPrefix);
+	const cleanLabel = isRoot ? label.replace(dbtRootIdentifierPrefix, '') : label;
+
+	// Collect all dbt types within this branch for CSS targeting
+	const types = new Set<string>();
+	const collectTypes = (e: _SidebarEntry) => {
+		if (e.type === 'link' && e.attrs?.['data-dbt-type']) {
+			types.add(e.attrs['data-dbt-type']);
+		} else if (e.type === 'group' && e.entries) {
+			e.entries.forEach(collectTypes);
+		}
+	};
+	collectTypes(entry);
+
+	return { isRoot, cleanLabel, types: Array.from(types) };
 }

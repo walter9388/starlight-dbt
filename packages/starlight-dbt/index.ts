@@ -2,13 +2,7 @@ import { AstroError } from 'astro/errors';
 
 import { StarlightDbtOptionsSchema, type StarlightDbtUserOptions } from './config';
 import { createProjectService } from './lib/projectService';
-import {
-	getDbtArtifactsAbsolutePath,
-	getPageTemplatePath,
-	getDatabaseSidebar,
-	getProjectSidebar,
-	getGroupSidebar as getGroupsSidebar,
-} from './utils';
+import { getDbtArtifactsAbsolutePath, getPageTemplatePath, getDbtSidebar } from './utils';
 
 import type { StarlightPlugin } from '@astrojs/starlight/types';
 
@@ -43,14 +37,13 @@ export default function starlightDbtPlugin(userOptions?: StarlightDbtUserOptions
 				service.create_id_map();
 
 				try {
-					const dbtDatabaseSidebar = getDatabaseSidebar(service.tree.database, config.basePath);
-					const dbtProjectSidebar = getProjectSidebar(service.tree.project, config.basePath);
-					const dbtGroupsSidebar = getGroupsSidebar(service.tree.groups, config.basePath);
-					const currentSidebar = starlightConfig.sidebar ?? [];
-					currentSidebar.push(...dbtDatabaseSidebar, ...dbtProjectSidebar, ...dbtGroupsSidebar);
-
 					updateConfig({
-						sidebar: currentSidebar,
+						sidebar: getDbtSidebar(
+							starlightConfig.sidebar ?? [],
+							service,
+							config.basePath,
+							'Default dbt Project'
+						),
 						components: {
 							...starlightConfig.components,
 							Sidebar: 'starlight-dbt/components/DbtSidebar.astro',

@@ -4,6 +4,7 @@
 
 import { Badge, Icon } from '@astrojs/starlight/components';
 import SidebarRestorePoint from './SidebarRestorePoint.astro';
+import { getSidebarEntryMeta } from '../utils';
 
 // extract SidebarEntry and SidebarLink types from Astro.locals.starlightRoute.sidebar
 const { sidebar } = Astro.locals.starlightRoute;
@@ -28,51 +29,161 @@ const { sublist, nested } = Astro.props;
 
 <ul class:list={{ 'top-level': !nested }}>
 	{
-		sublist.map((entry) => (
-			<li>
-				{entry.type === 'link' ? (
-					<a
-						href={entry.href}
-						aria-current={entry.isCurrent && 'page'}
-						class:list={[{ large: !nested }, entry.attrs.class]}
-						{...entry.attrs}
-					>
-						<span>{entry.label}</span>
-						{entry.badge && (
-							<Badge
-								variant={entry.badge.variant}
-								class={entry.badge.class}
-								text={entry.badge.text}
-							/>
-						)}
-					</a>
-				) : (
-					<details
-						open={flattenSidebar(entry.entries).some((i) => i.isCurrent) || !entry.collapsed}
-					>
-						<summary>
-							<span class="group-label">
-								<span class="large">{entry.label}</span>
-								{entry.badge && (
-									<Badge
-										variant={entry.badge.variant}
-										class={entry.badge.class}
-										text={entry.badge.text}
-									/>
-								)}
-							</span>
-							<Icon name="right-caret" class="caret" size="1.25rem" />
-						</summary>
-						<SidebarRestorePoint />
-						<Astro.self sublist={entry.entries} nested />
-					</details>
-				)}
-			</li>
-		))
+		sublist.map((entry) => {
+			// determine if this entry is a dbt root or contains dbt types
+			const { isRoot, cleanLabel, types } = getSidebarEntryMeta(entry);
+			const containerClasses = types.map((t) => `contains-${t}`).join(' ');
+
+			// Things added to the internal SidebarSublist component:
+			// 1. containerClasses: adds CSS classes to <li> or <details> based on contained dbt types
+			// 2. isRoot check: adds the dbt view switcher if this is the root node
+			// 3. cleanLabel: removes the dbt root identifier from the label display
+			return (
+				<li class:list={[containerClasses, { 'dbt-root-node': isRoot }]}>
+					{entry.type === 'link' ? (
+						<a
+							href={entry.href}
+							aria-current={entry.isCurrent && 'page'}
+							class:list={[{ large: !nested }, entry.attrs.class]}
+							{...entry.attrs}
+						>
+							<span>{cleanLabel}</span>
+							{entry.badge && (
+								<Badge
+									variant={entry.badge.variant}
+									class={entry.badge.class}
+									text={entry.badge.text}
+								/>
+							)}
+						</a>
+					) : (
+						<details
+							open={flattenSidebar(entry.entries).some((i) => i.isCurrent) || !entry.collapsed}
+							class:list={[containerClasses]}
+						>
+							<summary>
+								<span class="group-label">
+									<span class="large">{cleanLabel}</span>
+									{entry.badge && (
+										<Badge
+											variant={entry.badge.variant}
+											class={entry.badge.class}
+											text={entry.badge.text}
+										/>
+									)}
+								</span>
+								<Icon name="right-caret" class="caret" size="1.25rem" />
+							</summary>
+
+							{
+								// Three way radio switcher for dbt project/database/group views
+								isRoot && (
+									<div class="dbt-switcher">
+										<input type="radio" name="dbt-view" id="v-project" value="project" checked />
+										<label for="v-project">Project</label>
+
+										<input type="radio" name="dbt-view" id="v-database" value="database" />
+										<label for="v-database">Database</label>
+
+										<input type="radio" name="dbt-view" id="v-group" value="group" />
+										<label for="v-group">Group</label>
+									</div>
+								)
+							}
+
+							<SidebarRestorePoint />
+							<Astro.self sublist={entry.entries} nested />
+						</details>
+					)}
+				</li>
+			);
+		})
 	}
 </ul>
 
 <style>
+	/** * DBT SIDEBAR FILTERING LOGIC
+     * ---------------------------
+     * HOW IT WORKS:
+     * 1. Discovery: The JS frontmatter scans the sidebar tree and adds 'contains-{type}' 
+     * classes to parent folders based on their children's data-dbt-type attributes.
+     * 2. State Control: A hidden radio button group (dbt-switcher) acts as the state controller.
+     * 3. Filtering: We use the CSS :has() relational selector on the root node. 
+     * By default, all dbt-flagged items are hidden (display: none).
+     * 4. Visibility: When a radio button is :checked, the CSS 're-enables' any branch 
+     * or link that matches that specific dbt type.
+     */
+	@layer dbt.filtering {
+		/* --- Switcher UI --- */
+		.dbt-switcher {
+			display: flex;
+			background: var(--sl-color-gray-6);
+			border-radius: 0.4rem;
+			padding: 0.2rem;
+			margin: 0.5rem var(--sl-sidebar-item-padding-inline);
+			gap: 0.2rem;
+			border: 1px solid var(--sl-color-hairline);
+		}
+
+		.dbt-switcher input {
+			display: none;
+		}
+
+		.dbt-switcher label {
+			flex: 1;
+			text-align: center;
+			font-size: 0.7rem;
+			padding: 0.25rem;
+			cursor: pointer;
+			border-radius: 0.25rem;
+			color: var(--sl-color-gray-3);
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+			transition:
+				background 0.2s,
+				color 0.2s;
+		}
+
+		.dbt-switcher input:checked + label {
+			background: var(--sl-color-accent-low);
+			color: var(--sl-color-white);
+			font-weight: 600;
+		}
+
+		/* --- Global Hidden State --- */
+		/* Targets anything tagged with a 'contains-' class or a direct dbt-type attribute */
+		.dbt-root-node li[class*='contains-'],
+		.dbt-root-node details[class*='contains-'],
+		.dbt-root-node a[data-dbt-type] {
+			display: none;
+		}
+
+		/* --- Conditional Visibility Rules --- */
+		/* Project View */
+		.dbt-root-node:has(#v-project:checked) .contains-project,
+		.dbt-root-node:has(#v-project:checked) a[data-dbt-type='project'] {
+			display: block;
+		}
+
+		/* Database View */
+		.dbt-root-node:has(#v-database:checked) .contains-database,
+		.dbt-root-node:has(#v-database:checked) a[data-dbt-type='database'] {
+			display: block;
+		}
+
+		/* Group View */
+		.dbt-root-node:has(#v-group:checked) .contains-group,
+		.dbt-root-node:has(#v-group:checked) a[data-dbt-type='group'] {
+			display: block;
+		}
+
+		/* Ensure summaries (folder headers) are always flex if their parent is visible */
+		.dbt-root-node summary {
+			display: flex !important;
+		}
+	}
+
+	/* Original Starlight Styles */
 	@layer starlight.core {
 		ul {
 			--sl-sidebar-item-padding-inline: 0.5rem;
