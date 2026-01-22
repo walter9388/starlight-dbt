@@ -1,0 +1,248 @@
+---
+// Taken from https://github.com/withastro/starlight/blob/ac3d87270e815009e58af7a90797262362b4f818/packages/starlight/components/SidebarSublist.astro
+// and adapted to add dbt sidebar functionality
+
+import { Badge, Icon } from '@astrojs/starlight/components';
+import SidebarRestorePoint from './SidebarRestorePoint.astro';
+import { getSidebarEntryMeta } from '../utils';
+import DbtSidebarRadioSwitcher from './DbtSidebarRadioSwitch.astro';
+
+// extract SidebarEntry and SidebarLink types from Astro.locals.starlightRoute.sidebar
+const { sidebar } = Astro.locals.starlightRoute;
+type SidebarEntry = (typeof sidebar)[number];
+type SidebarLink = Extract<SidebarEntry, { type: 'link' }>;
+
+interface Props {
+	sublist: SidebarEntry[];
+	nested?: boolean;
+}
+
+const { sublist, nested } = Astro.props;
+const { pathname } = Astro.url;
+
+// Taken from https://github.com/withastro/starlight/blob/ac3d87270e815009e58af7a90797262362b4f818/packages/starlight/utils/navigation.ts#L453-L458
+/** Turn the nested tree structure of a sidebar into a flat list of all the links. */
+const flattenSidebar = (sidebar: SidebarEntry[]): SidebarLink[] => {
+	return sidebar.flatMap((entry) =>
+		entry.type === 'group' ? flattenSidebar(entry.entries) : entry
+	);
+};
+
+const isCurrentPage = (href: string) => {
+	const normalize = (p: string) => p.replace(/\/$/, '');
+	return normalize(pathname) === normalize(href);
+};
+---
+
+<ul class:list={{ 'top-level': !nested }}>
+	{
+		sublist.map((entry) => {
+			// determine if this entry is a dbt root or contains dbt types
+			const { isRoot, cleanLabel, types } = getSidebarEntryMeta(entry);
+			const containerClasses = types.map((t) => `contains-${t}`).join(' ');
+
+			// Things added to the internal SidebarSublist component:
+			// 1. containerClasses: adds CSS classes to <li> or <details> based on contained dbt types
+			// 2. isRoot check: adds the dbt view switcher if this is the root node
+			// 3. cleanLabel: removes the dbt root identifier from the label display
+			return (
+				<li class:list={[containerClasses, { 'dbt-root-node': isRoot }]}>
+					{entry.type === 'link' ? (
+						<a
+							href={entry.href}
+							aria-current={isCurrentPage(entry.href) && 'page'}
+							class:list={[{ large: !nested }, entry.attrs.class]}
+							{...entry.attrs}
+						>
+							<span>{cleanLabel}</span>
+							{entry.badge && (
+								<Badge
+									variant={entry.badge.variant}
+									class={entry.badge.class}
+									text={entry.badge.text}
+								/>
+							)}
+						</a>
+					) : (
+						<details
+							open={flattenSidebar(entry.entries).some((i) => i.isCurrent) || !entry.collapsed}
+							class:list={[containerClasses]}
+						>
+							<summary>
+								<span class="group-label">
+									<span class="large">{cleanLabel}</span>
+									{entry.badge && (
+										<Badge
+											variant={entry.badge.variant}
+											class={entry.badge.class}
+											text={entry.badge.text}
+										/>
+									)}
+								</span>
+								<Icon name="right-caret" class="caret" size="1.25rem" />
+							</summary>
+
+							{
+								// dbt radio switcher component at under dbt-root-node
+								isRoot && <DbtSidebarRadioSwitcher />
+							}
+
+							<SidebarRestorePoint />
+							<Astro.self sublist={entry.entries} nested />
+						</details>
+					)}
+				</li>
+			);
+		})
+	}
+</ul>
+
+<style>
+	/** * DBT SIDEBAR FILTERING LOGIC
+     * ---------------------------
+     * HOW IT WORKS:
+     * 1. Discovery: The JS frontmatter scans the sidebar tree and adds 'contains-{type}' 
+     * classes to parent folders based on their children's data-dbt-type attributes.
+     * 2. State Control: A radio button group (DbtSidebarRadioSwitch component) acts as the controller.
+     * 3. Filtering: We use the CSS :has() relational selector on the root node. 
+     * 4. Visibility: When a radio button is :checked, we 're-enable' matching branches/links.
+     *
+     * NOTE ON CASCADE LAYERS:
+     * These rules are intentionally kept UNLAYERED. In CSS, unlayered styles have 
+     * higher priority than layered ones. This ensures our functional "display: none" 
+     * correctly overrides any theme defaults (like Starlight's a { display: block })
+     * without fighting specificity wars.
+     */
+
+	/* --- Global Hidden State --- */
+	/* Targets anything tagged with a 'contains-' class or a direct dbt-type attribute */
+	.dbt-root-node li[class*='contains-'],
+	.dbt-root-node details[class*='contains-'],
+	.dbt-root-node a[data-dbt-type] {
+		display: none;
+	}
+
+	/* --- Conditional Visibility Rules --- */
+	/* Project View */
+	.dbt-root-node:has(#v-project:checked) .contains-project,
+	.dbt-root-node:has(#v-project:checked) a[data-dbt-type='project'] {
+		display: block;
+	}
+
+	/* Database View */
+	.dbt-root-node:has(#v-database:checked) .contains-database,
+	.dbt-root-node:has(#v-database:checked) a[data-dbt-type='database'] {
+		display: block;
+	}
+
+	/* Group View */
+	.dbt-root-node:has(#v-group:checked) .contains-group,
+	.dbt-root-node:has(#v-group:checked) a[data-dbt-type='group'] {
+		display: block;
+	}
+
+	/* Ensure summaries (folder headers) are always flex if their parent is visible.
+       !important is used here to ensure the summary behaves as a Starlight header. */
+	.dbt-root-node summary {
+		display: flex !important;
+	}
+
+	/* Add a subtle indicator to parent folders that contain the active page */
+	.dbt-root-node > details details:has(a[aria-current='page']) > summary {
+		color: var(--sl-color-accent-high);
+		font-weight: 600;
+	}
+
+	/* Original Starlight Styles */
+	@layer starlight.core {
+		ul {
+			--sl-sidebar-item-padding-inline: 0.5rem;
+			list-style: none;
+			padding: 0;
+		}
+
+		li {
+			overflow-wrap: anywhere;
+		}
+
+		ul ul li {
+			margin-inline-start: var(--sl-sidebar-item-padding-inline);
+			border-inline-start: 1px solid var(--sl-color-hairline-light);
+			padding-inline-start: var(--sl-sidebar-item-padding-inline);
+		}
+
+		.large {
+			font-size: var(--sl-text-lg);
+			font-weight: 600;
+			color: var(--sl-color-white);
+		}
+
+		.top-level > li + li {
+			margin-top: 0.75rem;
+		}
+
+		summary {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 0.2em var(--sl-sidebar-item-padding-inline);
+			line-height: 1.4;
+			cursor: pointer;
+			user-select: none;
+		}
+		summary::marker,
+		summary::-webkit-details-marker {
+			display: none;
+		}
+
+		.caret {
+			transition: transform 0.2s ease-in-out;
+			flex-shrink: 0;
+		}
+		:global([dir='rtl']) .caret {
+			transform: rotateZ(180deg);
+		}
+		[open] > summary .caret {
+			transform: rotateZ(90deg);
+		}
+
+		a {
+			display: block;
+			border-radius: 0.25rem;
+			text-decoration: none;
+			color: var(--sl-color-gray-2);
+			padding: 0.3em var(--sl-sidebar-item-padding-inline);
+			line-height: 1.4;
+		}
+
+		a:hover,
+		a:focus {
+			color: var(--sl-color-white);
+		}
+
+		[aria-current='page'],
+		[aria-current='page']:hover,
+		[aria-current='page']:focus {
+			font-weight: 600;
+			color: var(--sl-color-text-invert);
+			background-color: var(--sl-color-text-accent);
+		}
+
+		a > *:not(:last-child),
+		.group-label > *:not(:last-child) {
+			margin-inline-end: 0.25em;
+		}
+
+		@media (min-width: 50rem) {
+			.top-level > li + li {
+				margin-top: 0.5rem;
+			}
+			.large {
+				font-size: var(--sl-text-base);
+			}
+			a {
+				font-size: var(--sl-text-sm);
+			}
+		}
+	}
+</style>

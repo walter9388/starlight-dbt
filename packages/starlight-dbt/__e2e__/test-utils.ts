@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
 
-import { test as baseTest, type Page } from '@playwright/test';
+import { test as baseTest, type Page, expect } from '@playwright/test';
 import { build, dev, preview } from 'astro';
 
 export { expect, type Locator } from '@playwright/test';
@@ -102,3 +102,36 @@ class StarlightPage {
 type PreviewServer = Awaited<ReturnType<typeof preview>>;
 type DevServer = Awaited<ReturnType<typeof dev>>;
 type Server = PreviewServer | DevServer;
+
+/**
+ * Helper to recursively expand ALL folders inside the dbt section.
+ * This ensures nested links are considered "visible" by Playwright.
+ */
+export const expandAllDbtFolders = async (page: Page) => {
+	const dbtRoot = page.locator('li.dbt-root-node');
+	await dbtRoot.evaluate((node) => {
+		const details = node.querySelectorAll('details');
+		details.forEach((d) => (d.open = true));
+	});
+	// Wait a moment for Starlight's animations or layout to settle
+	await expect(dbtRoot.locator('.dbt-switcher')).toBeVisible();
+};
+
+/**
+ * Helper to open only the top-level dbt Project folder.
+ * This allows subsequent tests to verify that nested folders
+ * are opened automatically.
+ */
+export const expandDbtRoot = async (page: Page) => {
+	const dbtRoot = page.locator('li.dbt-root-node');
+	await dbtRoot.waitFor({ state: 'attached', timeout: 5000 });
+	await dbtRoot.evaluate((node) => {
+		const rootDetails = node.querySelector('details');
+		if (rootDetails) {
+			rootDetails.open = true;
+			rootDetails.dispatchEvent(new Event('toggle', { bubbles: true }));
+		}
+	});
+	// Wait a moment for Starlight's animations or layout to settle
+	await expect(dbtRoot.locator('.dbt-switcher')).toBeVisible();
+};

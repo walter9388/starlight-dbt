@@ -167,13 +167,19 @@ export interface dbtData {
 		metrics: TreeFolder<MetricValues>[];
 		semantic_models: TreeFolder<SemanticModelValues>[];
 		saved_queries: TreeFolder<SavedQueryValues>[];
+		unit_tests: TreeFolder<UnitTestValues>[];
 	};
+	id_map: Record<
+		string,
+		TreeFile<FilterProjectNode | MacroValues | SemanticModelValues | UnitTestValues>
+	>;
 	files: {
 		manifest: AugmentedManifestArtifact;
 		catalog: AugmentedCatalogArtifact;
 	};
 	loaded: boolean;
 	init: () => Promise<void>;
+	create_id_map: () => void;
 }
 type ValueOf<T> = T[keyof T];
 export type NodeValues = ValueOf<Project['nodes']>;
@@ -183,6 +189,7 @@ export type MetricValues = ValueOf<Project['metrics']>;
 export type SemanticModelValues = ValueOf<Project['semantic_models']>;
 export type SavedQueryValues = ValueOf<Project['saved_queries']>;
 export type MacroValues = ValueOf<Project['macros']>;
+export type UnitTestValues = ValueOf<Project['unit_tests']>;
 
 export type TreeNodeType =
 	| 'source'
