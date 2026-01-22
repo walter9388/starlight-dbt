@@ -12,20 +12,26 @@ const { sidebar } = Astro.locals.starlightRoute;
 type SidebarEntry = (typeof sidebar)[number];
 type SidebarLink = Extract<SidebarEntry, { type: 'link' }>;
 
-// Taken from https://github.com/withastro/starlight/blob/ac3d87270e815009e58af7a90797262362b4f818/packages/starlight/utils/navigation.ts#L453-L458
-/** Turn the nested tree structure of a sidebar into a flat list of all the links. */
-export function flattenSidebar(sidebar: SidebarEntry[]): SidebarLink[] {
-	return sidebar.flatMap((entry) =>
-		entry.type === 'group' ? flattenSidebar(entry.entries) : entry
-	);
-}
-
 interface Props {
 	sublist: SidebarEntry[];
 	nested?: boolean;
 }
 
 const { sublist, nested } = Astro.props;
+const { pathname } = Astro.url;
+
+// Taken from https://github.com/withastro/starlight/blob/ac3d87270e815009e58af7a90797262362b4f818/packages/starlight/utils/navigation.ts#L453-L458
+/** Turn the nested tree structure of a sidebar into a flat list of all the links. */
+const flattenSidebar = (sidebar: SidebarEntry[]): SidebarLink[] => {
+	return sidebar.flatMap((entry) =>
+		entry.type === 'group' ? flattenSidebar(entry.entries) : entry
+	);
+};
+
+const isCurrentPage = (href: string) => {
+	const normalize = (p: string) => p.replace(/\/$/, '');
+	return normalize(pathname) === normalize(href);
+};
 ---
 
 <ul class:list={{ 'top-level': !nested }}>
@@ -44,7 +50,7 @@ const { sublist, nested } = Astro.props;
 					{entry.type === 'link' ? (
 						<a
 							href={entry.href}
-							aria-current={entry.isCurrent && 'page'}
+							aria-current={isCurrentPage(entry.href) && 'page'}
 							class:list={[{ large: !nested }, entry.attrs.class]}
 							{...entry.attrs}
 						>
@@ -139,6 +145,12 @@ const { sublist, nested } = Astro.props;
        !important is used here to ensure the summary behaves as a Starlight header. */
 	.dbt-root-node summary {
 		display: flex !important;
+	}
+
+	/* Add a subtle indicator to parent folders that contain the active page */
+	.dbt-root-node > details details:has(a[aria-current='page']) > summary {
+		color: var(--sl-color-accent-high);
+		font-weight: 600;
 	}
 
 	/* Original Starlight Styles */

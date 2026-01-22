@@ -1,4 +1,5 @@
 ---
+
 ---
 
 <div class="dbt-switcher">
@@ -27,12 +28,45 @@
 </script>
 
 <script>
+	const syncSidebarExpansion = () => {
+		// 1. Find the currently active link that is VISIBLE in the current view
+		// We look for aria-current="page"
+		const activeLinks = Array.from(
+			document.querySelectorAll('.dbt-root-node a[aria-current="page"]')
+		) as HTMLElement[];
+
+		activeLinks.forEach((link) => {
+			// 2. Walk up the DOM tree from the link
+			let parent = link.parentElement;
+			while (parent && !parent.classList.contains('dbt-root-node')) {
+				// 3. If we hit a <details> element, open it
+				if (parent instanceof HTMLDetailsElement) {
+					parent.open = true;
+				}
+				parent = parent.parentElement;
+			}
+		});
+
+		// 4. Optional: Scroll the sidebar to the active link if it's off-screen
+		const visibleActive = Array.from(activeLinks).find((el) => el.offsetParent !== null);
+		if (visibleActive) {
+			visibleActive.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+		}
+	};
+
+	// Trigger expansion when the radio buttons change
 	document.addEventListener('change', (e) => {
 		const target = e.target as HTMLInputElement;
 		if (target && target.name === 'dbt-view') {
 			localStorage.setItem('starlight-dbt-view-preference', target.value);
+
+			// Allow a tiny delay for CSS 'display: block' to kick in
+			setTimeout(syncSidebarExpansion, 10);
 		}
 	});
+
+	// Also trigger on initial page load (for the is:inline persistence)
+	window.addEventListener('load', syncSidebarExpansion);
 </script>
 
 <style>

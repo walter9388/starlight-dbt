@@ -1,5 +1,4 @@
-import type { Page } from '@playwright/test';
-import { expect, testFactory } from './test-utils';
+import { expect, testFactory, expandAllDbtFolders, expandDbtRoot } from './test-utils';
 
 const test = testFactory('./fixtures/basics/');
 
@@ -74,20 +73,6 @@ test.describe('Pages', () => {
 
 test.describe('Sidebar Functionality', () => {
 	test.describe('dbt', () => {
-		/**
-		 * Helper to recursively expand ALL folders inside the dbt section.
-		 * This ensures nested links are considered "visible" by Playwright.
-		 */
-		const expandAllDbtFolders = async (page: Page) => {
-			const dbtRoot = page.locator('li.dbt-root-node');
-			await dbtRoot.evaluate((node) => {
-				const details = node.querySelectorAll('details');
-				details.forEach((d) => (d.open = true));
-			});
-			// Wait a moment for Starlight's animations or layout to settle
-			await expect(dbtRoot.locator('.dbt-switcher')).toBeVisible();
-		};
-
 		test('should strip the _DBTROOT: prefix from the label', async ({ page, getProdServer }) => {
 			const starlight = await getProdServer();
 			await starlight.goto('/examples/example1');
@@ -184,6 +169,101 @@ test.describe('Sidebar Functionality', () => {
 
 			await expandAllDbtFolders(page);
 			await expect(page.locator('a[data-dbt-type="database"]').first()).toBeVisible();
+		});
+	});
+
+	test.describe('Sidebar Advanced Selection & Expansion', () => {
+		test('should highlight the current page in the default (Project) view', async ({
+			page,
+			getProdServer,
+		}) => {
+			const starlight = await getProdServer();
+			await starlight.goto('/dbt/model.test_pkg.model_node');
+			await expandDbtRoot(page);
+
+			// Look for the active link specifically within the dbt root
+			// Use data-dbt-type="project" as project is the default radio state
+			const activeLink = page.locator(
+				'.dbt-root-node a[aria-current="page"][data-dbt-type="project"]'
+			);
+			await expect(activeLink.first()).toBeVisible();
+			await expect(activeLink.first()).toHaveText('model_node_v1');
+		});
+
+		test('should synchronize highlighting and auto-expand when switching views', async ({
+			page,
+			getProdServer,
+		}) => {
+			const starlight = await getProdServer();
+			await starlight.goto('/dbt/model.test_pkg.model_node');
+			await expandDbtRoot(page);
+
+			// Switch to Database View
+			await page.locator('label[for="v-database"]').click();
+
+			// Target the active link that is now VISIBLE in the new view
+			const activeLink = page.locator('.dbt-root-node a[aria-current="page"]:visible');
+			await expect(activeLink).toBeVisible();
+
+			// Verify ancestor folders are auto-expanded by our component script
+			const parentFolder = activeLink.locator('xpath=./ancestor::details').first();
+			await expect(parentFolder).toHaveAttribute('open', '');
+		});
+
+		test('should apply accent color to parent folders but NOT the dbt-root-node', async ({
+			page,
+			getProdServer,
+		}) => {
+			const starlight = await getProdServer();
+			await starlight.goto('/dbt/model.test_pkg.model_node');
+			await expandDbtRoot(page);
+
+			// Nested folder summary should have the highlight style
+			const nestedSummary = page.locator(
+				'.dbt-root-node > details details:has(a[aria-current="page"]) > summary'
+			);
+			await expect(nestedSummary.first()).toHaveCSS('font-weight', '600');
+
+			// Root summary should NOT match the specific "nested highlight" selector
+			const rootSummary = page.locator('.dbt-root-node > details > summary').first();
+			const isHighlighted = await rootSummary.evaluate(
+				(el, sel) => el.matches(sel),
+				'details details:has(a[aria-current="page"]) > summary'
+			);
+			expect(isHighlighted).toBe(false);
+		});
+
+		test('should handle switching to a view where the current page does not exist', async ({
+			page,
+			getProdServer,
+		}) => {
+			const starlight = await getProdServer();
+			// Using an analysis node (ensure this URL is correct in your fixture!)
+			await starlight.goto('/dbt/analysis.test_pkg.analysis_node');
+			await expandDbtRoot(page);
+
+			// Switch to Database view (where analysis is presumably hidden)
+			await page.locator('label[for="v-database"]').click();
+
+			// Check all instances of this page link in the dbt tree
+			const activeLinks = await page.locator('.dbt-root-node a[aria-current="page"]').all();
+			for (const link of activeLinks) {
+				await expect(link).toBeHidden();
+			}
+		});
+
+		test('should maintain scroll position on the active item after switch', async ({
+			page,
+			getProdServer,
+		}) => {
+			const starlight = await getProdServer();
+			await starlight.goto('/dbt/source.test_pkg.s1.source1');
+			await expandDbtRoot(page);
+
+			await page.locator('label[for="v-database"]').click();
+
+			const activeLink = page.locator('.dbt-root-node a[aria-current="page"]:visible');
+			await expect(activeLink).toBeInViewport();
 		});
 	});
 });
