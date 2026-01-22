@@ -166,34 +166,34 @@ describe('buildSavedQueryTree', () => {
 
 describe('buildUnitTestTree', () => {
 	it('groups unit tests by package_name, sorts and marks active selection', () => {
- 		const nodes = [
- 			{ name: 'test_c', package_name: 'pkg1', unique_id: 'test.pkg1.test_c' },
- 			{ name: 'test_a', package_name: 'pkg1', unique_id: 'test.pkg1.test_a' },
- 			{ name: 'test_b', package_name: 'pkg2', unique_id: 'test.pkg2.test_b' },
- 		] as any;
+		const nodes = [
+			{ name: 'test_c', package_name: 'pkg1', unique_id: 'test.pkg1.test_c' },
+			{ name: 'test_a', package_name: 'pkg1', unique_id: 'test.pkg1.test_a' },
+			{ name: 'test_b', package_name: 'pkg2', unique_id: 'test.pkg2.test_b' },
+		] as any;
 
- 		const tree = buildUnitTestTree(nodes, 'test.pkg1.test_c');
+		const tree = buildUnitTestTree(nodes, 'test.pkg1.test_c');
 
- 		// Should create folders for pkg1 and pkg2
- 		expect(tree.map((t) => t.name)).toEqual(expect.arrayContaining(['pkg1', 'pkg2']));
+		// Should create folders for pkg1 and pkg2
+		expect(tree.map((t) => t.name)).toEqual(expect.arrayContaining(['pkg1', 'pkg2']));
 
- 		const pkg1 = tree.find((t) => t.name === 'pkg1')!;
- 		expect(isFolder(pkg1)).toBe(true);
- 		expect(pkg1.active).toBe(true);
- 		expect(pkg1.items.find((t) => t.name === 'test_c')!.active).toBe(true);
+		const pkg1 = tree.find((t) => t.name === 'pkg1')!;
+		expect(isFolder(pkg1)).toBe(true);
+		expect(pkg1.active).toBe(true);
+		expect(pkg1.items.find((t) => t.name === 'test_c')!.active).toBe(true);
 
- 		const itemNames = (pkg1.items as any[]).map((i) => i.name);
- 		expect(itemNames).toEqual(['test_a', 'test_c']); // sorted by name
+		const itemNames = (pkg1.items as any[]).map((i) => i.name);
+		expect(itemNames).toEqual(['test_a', 'test_c']); // sorted by name
 
- 		const pkg2 = tree.find((t) => t.name === 'pkg2')!;
- 		expect(pkg2.active).toBe(false);
- 		expect(pkg2.items[0]!.active).toBe(false);
- 	});
+		const pkg2 = tree.find((t) => t.name === 'pkg2')!;
+		expect(pkg2.active).toBe(false);
+		expect(pkg2.items[0]!.active).toBe(false);
+	});
 
- 	it('handles empty input gracefully', () => {
- 		const tree = buildUnitTestTree([], undefined);
- 		expect(tree).toEqual([]);
- 	});
+	it('handles empty input gracefully', () => {
+		const tree = buildUnitTestTree([], undefined);
+		expect(tree).toEqual([]);
+	});
 });
 
 describe('buildProjectTree', () => {

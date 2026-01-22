@@ -169,7 +169,10 @@ export interface dbtData {
 		saved_queries: TreeFolder<SavedQueryValues>[];
 		unit_tests: TreeFolder<UnitTestValues>[];
 	};
-	id_map: Record<string, TreeFile<FilterProjectNode | MacroValues | SemanticModelValues | UnitTestValues>>;
+	id_map: Record<
+		string,
+		TreeFile<FilterProjectNode | MacroValues | SemanticModelValues | UnitTestValues>
+	>;
 	files: {
 		manifest: AugmentedManifestArtifact;
 		catalog: AugmentedCatalogArtifact;

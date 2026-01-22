@@ -99,7 +99,13 @@ function normalizeTree<T extends TreeItem<unknown>>(items: T[]): T[] {
  * @returns Sorted folder TreeItems with sorted file children
  */
 function buildGroupedTree<
-	T extends SourceValues | ExposureValues | MetricValues | SemanticModelValues | SavedQueryValues | UnitTestValues,
+	T extends
+		| SourceValues
+		| ExposureValues
+		| MetricValues
+		| SemanticModelValues
+		| SavedQueryValues
+		| UnitTestValues,
 >(
 	nodes: T[],
 	groupKey: (node: T) => string,
@@ -225,7 +231,7 @@ export function buildSavedQueryTree(
  */
 export function buildUnitTestTree(
 	nodes: UnitTestValues[],
-	select?: string	
+	select?: string
 ): TreeFolder<UnitTestValues>[] {
 	return buildGroupedTree(nodes, (n) => n.package_name, 'test', select);
 }

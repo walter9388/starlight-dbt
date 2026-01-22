@@ -60,7 +60,7 @@ export default function starlightDbtPlugin(userOptions?: StarlightDbtUserOptions
 				addIntegration({
 					name: 'starlight-dbt-integration',
 					hooks: {
-						'astro:config:setup': async ({ injectRoute, updateConfig }) => {
+						'astro:config:setup': ({ injectRoute, updateConfig }) => {
 							injectRoute({
 								pattern: `${config.basePath}/[...slug]`,
 								entrypoint: getPageTemplatePath(config),

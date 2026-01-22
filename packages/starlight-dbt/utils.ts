@@ -2,11 +2,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { dbtRootIdentifierPrefix } from './constants';
+
 import type { StarlightDbtOptions } from './config';
 import type { HookParameters } from '@astrojs/starlight/types';
 import type { AstroConfig } from 'astro';
 import type { ProjectNode, TreeItem, MacroValues, dbtData } from 'starlight-dbt/types';
-import { dbtRootIdentifierPrefix } from './constants';
 
 export type StarlightUserConfig = HookParameters<'config:setup'>['config'];
 type SidebarItem = NonNullable<StarlightUserConfig['sidebar']>[number];
