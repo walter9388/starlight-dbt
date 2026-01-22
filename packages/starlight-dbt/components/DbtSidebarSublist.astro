@@ -77,8 +77,7 @@ const { sublist, nested } = Astro.props;
 							</summary>
 
 							{
-								// new dbt radio switcher component at root level
-								// dbt-switcher CSS group is within this component
+								// dbt radio switcher component at under dbt-root-node
 								isRoot && <DbtSidebarRadioSwitcher />
 							}
 
@@ -98,44 +97,48 @@ const { sublist, nested } = Astro.props;
      * HOW IT WORKS:
      * 1. Discovery: The JS frontmatter scans the sidebar tree and adds 'contains-{type}' 
      * classes to parent folders based on their children's data-dbt-type attributes.
-     * 2. State Control: A hidden radio button group (dbt-switcher) acts as the state controller.
+     * 2. State Control: A radio button group (DbtSidebarRadioSwitch component) acts as the controller.
      * 3. Filtering: We use the CSS :has() relational selector on the root node. 
-     * By default, all dbt-flagged items are hidden (display: none).
-     * 4. Visibility: When a radio button is :checked, the CSS 're-enables' any branch 
-     * or link that matches that specific dbt type.
+     * 4. Visibility: When a radio button is :checked, we 're-enable' matching branches/links.
+     *
+     * NOTE ON CASCADE LAYERS:
+     * These rules are intentionally kept UNLAYERED. In CSS, unlayered styles have 
+     * higher priority than layered ones. This ensures our functional "display: none" 
+     * correctly overrides any theme defaults (like Starlight's a { display: block })
+     * without fighting specificity wars.
      */
-	@layer dbt.filtering {
-		/* --- Global Hidden State --- */
-		/* Targets anything tagged with a 'contains-' class or a direct dbt-type attribute */
-		.dbt-root-node li[class*='contains-'],
-		.dbt-root-node details[class*='contains-'],
-		.dbt-root-node a[data-dbt-type] {
-			display: none;
-		}
 
-		/* --- Conditional Visibility Rules --- */
-		/* Project View */
-		.dbt-root-node:has(#v-project:checked) .contains-project,
-		.dbt-root-node:has(#v-project:checked) a[data-dbt-type='project'] {
-			display: block;
-		}
+	/* --- Global Hidden State --- */
+	/* Targets anything tagged with a 'contains-' class or a direct dbt-type attribute */
+	.dbt-root-node li[class*='contains-'],
+	.dbt-root-node details[class*='contains-'],
+	.dbt-root-node a[data-dbt-type] {
+		display: none;
+	}
 
-		/* Database View */
-		.dbt-root-node:has(#v-database:checked) .contains-database,
-		.dbt-root-node:has(#v-database:checked) a[data-dbt-type='database'] {
-			display: block;
-		}
+	/* --- Conditional Visibility Rules --- */
+	/* Project View */
+	.dbt-root-node:has(#v-project:checked) .contains-project,
+	.dbt-root-node:has(#v-project:checked) a[data-dbt-type='project'] {
+		display: block;
+	}
 
-		/* Group View */
-		.dbt-root-node:has(#v-group:checked) .contains-group,
-		.dbt-root-node:has(#v-group:checked) a[data-dbt-type='group'] {
-			display: block;
-		}
+	/* Database View */
+	.dbt-root-node:has(#v-database:checked) .contains-database,
+	.dbt-root-node:has(#v-database:checked) a[data-dbt-type='database'] {
+		display: block;
+	}
 
-		/* Ensure summaries (folder headers) are always flex if their parent is visible */
-		.dbt-root-node summary {
-			display: flex !important;
-		}
+	/* Group View */
+	.dbt-root-node:has(#v-group:checked) .contains-group,
+	.dbt-root-node:has(#v-group:checked) a[data-dbt-type='group'] {
+		display: block;
+	}
+
+	/* Ensure summaries (folder headers) are always flex if their parent is visible.
+       !important is used here to ensure the summary behaves as a Starlight header. */
+	.dbt-root-node summary {
+		display: flex !important;
 	}
 
 	/* Original Starlight Styles */
