@@ -20,6 +20,11 @@ import type {
  */
 export type JsonInput = string | Record<string, unknown>;
 
+export interface DbtArtifacts {
+	manifest: JsonInput;
+	catalog: JsonInput;
+}
+
 /**
  * Metadata attached to a column-level dbt test.
  *
@@ -179,6 +184,7 @@ export interface dbtData {
 	};
 	loaded: boolean;
 	init: () => Promise<void>;
+	parse: () => void;
 	create_id_map: () => void;
 }
 type ValueOf<T> = T[keyof T];

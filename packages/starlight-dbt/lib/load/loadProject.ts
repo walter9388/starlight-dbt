@@ -11,13 +11,11 @@ import {
 	buildSourceTree,
 	buildUnitTestTree,
 } from './buildNodeTrees';
-import { loadManifestV12, loadCatalogV1 } from './loadArtifacts';
 import { cleanProjectMacros, incorporate_catalog, getQuoteChar } from './utils';
 
 import type {
 	AugmentedMacros,
 	AugmentedColumnNode,
-	JsonInput,
 	ManifestArtifact,
 	ManifestNode,
 	Project,
@@ -30,9 +28,8 @@ import type {
  * Load and augment a dbt project from manifest and catalog inputs.
  *
  * This function performs the following high-level steps:
- * - Parses the manifest and catalog inputs (accepts either file paths or
- *   already-parsed JSON objects).
- * - Re-attaches sources, exposures, metrics, semantic models, saved queries,
+ * - Takes pre-parsed manifest and catalog jsons from `service.files`.
+ * - Attaches sources, exposures, metrics, semantic models, saved queries,
  *   and unit tests into the manifest `nodes` map so site/UI code can treat
  *   them uniformly.
  * - Cleans and consolidates macros (removing internal `dbt` macros and
@@ -46,21 +43,8 @@ import type {
  * set to `true` on success.
  *
  * @param service - dbtData to populate
- * @param manifestInput - File path or parsed manifest JSON
- * @param catalogInput - File path or parsed catalog JSON
  */
-export const loadProject = async function (
-	service: dbtData,
-	manifestInput: JsonInput,
-	catalogInput: JsonInput
-) {
-	const manifest = await loadManifestV12(manifestInput);
-	const catalog = await loadCatalogV1(catalogInput);
-
-	// assign raw manifest first
-	service.files.manifest = manifest;
-	service.files.catalog = catalog;
-
+export const loadProject = function (service: dbtData) {
 	// Set node labels (temporarily narrow to ManifestArtifact nodes)
 	Object.values(service.files.manifest.nodes as Record<string, ManifestNode>).forEach((node) => {
 		node.label =

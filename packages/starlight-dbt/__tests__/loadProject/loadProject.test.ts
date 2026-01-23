@@ -3,11 +3,12 @@ import path from 'node:path';
 import { describe, it, expect } from 'vitest';
 
 import { isFolder } from '../../lib/load/buildNodeTrees';
-import { createProjectService } from '../../lib/projectService';
+import { DbtProjectService } from '../../lib/projectService';
+import type { dbtData } from '../../lib/load/types';
 
 type TestCase = {
 	name: string;
-	createService: () => ReturnType<typeof createProjectService>;
+	createService: () => dbtData;
 };
 
 describe('loadProject (integration)', () => {
@@ -24,7 +25,7 @@ describe('loadProject (integration)', () => {
 					'__e2e__/fixtures/basics/dbt-artifacts/catalog.json'
 				);
 
-				return createProjectService(manifestPath, catalogPath);
+				return new DbtProjectService(manifestPath, catalogPath);
 			},
 		},
 		{
@@ -39,7 +40,7 @@ describe('loadProject (integration)', () => {
 					'../../examples/jaffle-shop/dbt-artifacts/catalog.json'
 				);
 
-				return createProjectService(manifestPath, catalogPath);
+				return new DbtProjectService(manifestPath, catalogPath);
 			},
 		},
 	];
@@ -48,6 +49,7 @@ describe('loadProject (integration)', () => {
 		it('loads manifest and catalog', async () => {
 			const service = createService();
 			await service.init();
+			service.parse();
 
 			expect(service.loaded).toBe(true);
 			expect(service.project).toBeDefined();
@@ -56,6 +58,7 @@ describe('loadProject (integration)', () => {
 		it('populates project nodes and macros', async () => {
 			const service = createService();
 			await service.init();
+			service.parse();
 
 			expect(Object.keys(service.project.nodes).length).toBeGreaterThan(0);
 			expect(Object.keys(service.project.macros).length).toBeGreaterThanOrEqual(0);
@@ -64,6 +67,7 @@ describe('loadProject (integration)', () => {
 		it('builds all model trees', async () => {
 			const service = createService();
 			await service.init();
+			service.parse();
 
 			expect(service.tree.project.length).toBeGreaterThan(0);
 			expect(service.tree.database.length).toBeGreaterThan(0);
@@ -73,6 +77,7 @@ describe('loadProject (integration)', () => {
 		it('excludes private and hidden models from trees', async () => {
 			const service = createService();
 			await service.init();
+			service.parse();
 
 			const allItems = JSON.stringify(service.tree.groups);
 
@@ -83,6 +88,7 @@ describe('loadProject (integration)', () => {
 		it('marks protected models in display name', async () => {
 			const service = createService();
 			await service.init();
+			service.parse();
 
 			const serialized = JSON.stringify(service.tree.groups);
 
@@ -95,6 +101,7 @@ describe('loadProject (integration)', () => {
 		it('groups models by group property', async () => {
 			const service = createService();
 			await service.init();
+			service.parse();
 
 			const groups = service.tree.groups.filter(isFolder);
 			expect(groups.length).toBeGreaterThan(0);
@@ -107,6 +114,7 @@ describe('loadProject (integration)', () => {
 		it('builds database tree with schemas', async () => {
 			const service = createService();
 			await service.init();
+			service.parse();
 
 			const dbTree = service.tree.database.filter(isFolder);
 			expect(dbTree.length).toBeGreaterThan(0);
@@ -118,6 +126,7 @@ describe('loadProject (integration)', () => {
 		it('builds source, exposure, metric, and semantic model trees', async () => {
 			const service = createService();
 			await service.init();
+			service.parse();
 
 			expect(service.tree.sources.length).toBeGreaterThanOrEqual(0);
 			expect(service.tree.exposures.length).toBeGreaterThanOrEqual(0);
@@ -128,6 +137,7 @@ describe('loadProject (integration)', () => {
 		it('does not throw when optional sections are empty', async () => {
 			const service = createService();
 			await expect(service.init()).resolves.not.toThrow();
+			service.parse();
 		});
 	});
 });

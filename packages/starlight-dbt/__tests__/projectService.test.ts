@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import { describe, it, expect } from 'vitest';
 
-import { createProjectService } from '../lib/projectService';
+import { createDbtProjectService } from '../lib/projectService';
 
 describe('Project service', () => {
 	it('loads manifest and catalog and initializes project', async () => {
@@ -19,8 +19,7 @@ describe('Project service', () => {
 		console.log('  manifest:', manifestPath);
 		console.log('  catalog :', catalogPath);
 
-		const service = createProjectService(manifestPath, catalogPath);
-		await service.init();
+		const service = await createDbtProjectService({ manifest: manifestPath, catalog: catalogPath });
 
 		console.log('✔ Project loaded successfully');
 		console.log('Nodes:', Object.keys(service.project.nodes).length);
