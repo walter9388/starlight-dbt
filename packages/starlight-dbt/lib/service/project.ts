@@ -1,8 +1,8 @@
 // adapted from https://github.com/dbt-labs/dbt-docs/blob/e03a7912f50d0ceb770fb77b99a059d57f810a9c/src/app/services/project_service.js
 
-import { createNodeMap } from './build-node-trees';
+import { populateNodeMap } from './build-node-trees';
 import { loadManifestV12, loadCatalogV1 } from './validate-artifacts';
-import { loadProject, populateModelTree } from './build-project';
+import { buildProject, populateModelTree } from './build-project';
 
 import type {
 	AugmentedCatalogArtifact,
@@ -11,19 +11,19 @@ import type {
 	DbtArtifacts,
 	JsonInput,
 	ManifestArtifact,
-	dbtData,
+	DbtService,
 } from './types';
 
 /**
- * DbtProjectService is responsible for loading, parsing, and organising
+ * DbtServiceImpl is responsible for loading, parsing, and organising
  * dbt manifest and catalog artifacts into a structured, queryable form.
  *
  * The lifecycle of this service is:
  * 1. `init()`   – Load and parse raw JSON artifacts
- * 2. `parse()`  – Build project structures and trees
- * 3. `create_id_map()` – Create a lookup map of nodes by `unique_id`
+ * 2. `build()`  – Build project structures and trees
+ * 3. `populate_node_map()` – Create a lookup map of nodes by `unique_id`
  */
-export class DbtProjectService implements dbtData {
+export class DbtServiceImpl implements DbtService {
 	/** Combined, augmented project representation */
 	project = {} as AugmentedManifestArtifact & AugmentedCatalogArtifact;
 
@@ -41,7 +41,7 @@ export class DbtProjectService implements dbtData {
 	};
 
 	/** Flat map of all nodes keyed by `unique_id` */
-	id_map = {};
+	node_map = {};
 
 	/** Raw artifact files as loaded from disk / input */
 	files = {
@@ -60,7 +60,7 @@ export class DbtProjectService implements dbtData {
 	/**
 	 * Loads the dbt manifest and catalog artifacts from the provided inputs.
 	 *
-	 * This must be called before `parse()` or `create_id_map()`.
+	 * This must be called before `build()` or `populate_node_map()`.
 	 */
 	async init(): Promise<void> {
 		this.files.manifest = await loadManifestV12(this.manifestInput);
@@ -74,8 +74,8 @@ export class DbtProjectService implements dbtData {
 	 *
 	 * Assumes `init()` has already been called.
 	 */
-	parse(): void {
-		loadProject(this);
+	build(): void {
+		buildProject(this);
 		populateModelTree(this);
 	}
 
@@ -86,27 +86,27 @@ export class DbtProjectService implements dbtData {
 	 * The map is rebuilt from scratch each time this method is called
 	 * to avoid stale references.
 	 */
-	create_id_map(): void {
+	populate_node_map(): void {
 		// Reset the map to ensure we don't have stale data
-		this.id_map = {};
+		this.node_map = {};
 
 		// Iterate through every branch in the tree and fold it into the map
 		Object.values(this.tree).forEach((branch) => {
-			createNodeMap(branch, this.id_map);
+			populateNodeMap(branch, this.node_map);
 		});
 	}
 }
 
 /**
  * Convenience factory that creates, initialises, and fully prepares
- * a DbtProjectService from the given dbt artifacts.
+ * a DbtServiceImpl from the given dbt artifacts.
  */
-export async function createDbtProjectService(artifacts: DbtArtifacts): Promise<dbtData> {
-	const service = new DbtProjectService(artifacts.manifest, artifacts.catalog);
+export async function createDbtService(artifacts: DbtArtifacts): Promise<DbtService> {
+	const service = new DbtServiceImpl(artifacts.manifest, artifacts.catalog);
 
 	await service.init();
-	service.parse();
-	service.create_id_map();
+	service.build();
+	service.populate_node_map();
 
 	return service;
 }

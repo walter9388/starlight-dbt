@@ -1,7 +1,7 @@
 import { AstroError } from 'astro/errors';
 
 import { StarlightDbtOptionsSchema, type StarlightDbtUserOptions } from './config';
-import { createDbtProjectService } from './lib/service/project';
+import { createDbtService } from './lib/service/project';
 import { getDbtArtifactsAbsolutePath, getPageTemplatePath, getDbtSidebar } from './utils';
 
 import type { StarlightPlugin } from '@astrojs/starlight/types';
@@ -29,7 +29,7 @@ export default function starlightDbtPlugin(userOptions?: StarlightDbtUserOptions
 			}) {
 				logger.info(`Using manifest: ${config.manifest}`);
 				logger.info(`Using catalog: ${config.catalog}`);
-				const service = await createDbtProjectService({
+				const service = await createDbtService({
 					manifest: getDbtArtifactsAbsolutePath(config.manifest, astroConfig),
 					catalog: getDbtArtifactsAbsolutePath(config.catalog, astroConfig),
 				});
@@ -77,7 +77,7 @@ export default function starlightDbtPlugin(userOptions?: StarlightDbtUserOptions
 											},
 											load(id) {
 												if (id === resolvedVirtualModuleId) {
-													return `export const dbtData = ${JSON.stringify(service)};`;
+													return `export const service = ${JSON.stringify(service)};`;
 												}
 												return null;
 											},

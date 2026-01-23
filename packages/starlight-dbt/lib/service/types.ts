@@ -95,7 +95,7 @@ export type AugmentedColumnNode = Omit<ManifestNode, 'columns'> & {
 	columns?: AugmentedColumns;
 };
 
-// used after loadProject to represent combined nodes and sources
+// used after buildProject to represent combined nodes and sources
 export type AugmentedManifestArtifact = Omit<ManifestArtifact, 'nodes'> & {
 	nodes: Record<
 		string,
@@ -115,7 +115,7 @@ export type CatalogArtifact = CatalogArtifactV1;
 export type CatalogMetadata = CatalogArtifact['metadata'];
 type CatalogNode = CatalogArtifact['nodes'][string];
 type CatalogSource = CatalogArtifact['sources'][string];
-// used after loadProject to represent combined nodes and sources
+// used after buildProject to represent combined nodes and sources
 export type AugmentedCatalogArtifact = CatalogArtifact & {
 	nodes: Record<string, CatalogNode | CatalogSource>;
 };
@@ -161,7 +161,7 @@ export type FilterProjectNode =
 	  >
 	| SingularTest;
 
-export interface dbtData {
+export interface DbtService {
 	project: Project;
 	tree: {
 		project: TreeFolder<FilterProjectNode | MacroValues>[];
@@ -174,7 +174,7 @@ export interface dbtData {
 		saved_queries: TreeFolder<SavedQueryValues>[];
 		unit_tests: TreeFolder<UnitTestValues>[];
 	};
-	id_map: Record<
+	node_map: Record<
 		string,
 		TreeFile<FilterProjectNode | MacroValues | SemanticModelValues | UnitTestValues>
 	>;
@@ -184,8 +184,8 @@ export interface dbtData {
 	};
 	loaded: boolean;
 	init: () => Promise<void>;
-	parse: () => void;
-	create_id_map: () => void;
+	build: () => void;
+	populate_node_map: () => void;
 }
 type ValueOf<T> = T[keyof T];
 export type NodeValues = ValueOf<Project['nodes']>;

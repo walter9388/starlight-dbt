@@ -19,7 +19,7 @@ import type {
 	ManifestArtifact,
 	ManifestNode,
 	Project,
-	dbtData,
+	DbtService,
 	TestInfo,
 	FilterProjectNode,
 } from './types';
@@ -42,9 +42,9 @@ import type {
  * will be set to the resulting merged project and `service.loaded` will be
  * set to `true` on success.
  *
- * @param service - dbtData to populate
+ * @param service - DbtService to populate
  */
-export const loadProject = function (service: dbtData) {
+export const buildProject = function (service: DbtService) {
 	// Set node labels (temporarily narrow to ManifestArtifact nodes)
 	Object.values(service.files.manifest.nodes as Record<string, ManifestNode>).forEach((node) => {
 		node.label =
@@ -215,7 +215,7 @@ export const loadProject = function (service: dbtData) {
 };
 
 /**
- * Populates the various hierarchical project trees in the given `dbtData`.
+ * Populates the various hierarchical project trees in the given `DbtService`.
  *
  * - Filters nodes from the project by accepted resource types and custom tests.
  * - Extracts macros from the project.
@@ -230,10 +230,10 @@ export const loadProject = function (service: dbtData) {
  *   - saved queries (`buildSavedQueryTree`)
  * - Assigns the resulting trees to `service.tree`.
  *
- * @param service - The `dbtData` instance containing project nodes, macros, and tree storage
+ * @param service - The `DbtService` instance containing project nodes, macros, and tree storage
  * @returns Promise<void> that resolves when all trees have been populated
  */
-export const populateModelTree = function (service: dbtData) {
+export const populateModelTree = function (service: DbtService) {
 	// get nodes/macros from service.project
 	const acceptedNodeTypes = [
 		'snapshot',

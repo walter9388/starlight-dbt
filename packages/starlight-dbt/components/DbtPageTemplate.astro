@@ -1,10 +1,10 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import { dbtData } from 'virtual:dbt-data';
+import { service } from 'virtual:dbt-data';
 
 export async function getStaticPaths() {
-	// Generate a page for every node in dbtData
-	return Object.values(dbtData.id_map).map((node) => {
+	// Generate a page for every node in service
+	return Object.values(service.node_map).map((node) => {
 		return {
 			params: { slug: node.unique_id }, // This becomes /docs/dbt/model.my_project.my_model
 			props: { node },

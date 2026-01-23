@@ -3,16 +3,16 @@ import path from 'node:path';
 import { describe, it, expect } from 'vitest';
 
 import { isFolder } from '../../lib/service/build-node-trees';
-import { DbtProjectService } from '../../lib/service/project';
+import { DbtServiceImpl } from '../../lib/service/project';
 
-import type { dbtData } from '../../lib/service/types';
+import type { DbtService } from '../../lib/service/types';
 
 type TestCase = {
 	name: string;
-	createService: () => dbtData;
+	createService: () => DbtService;
 };
 
-describe('loadProject (integration)', () => {
+describe('buildProject (integration)', () => {
 	const cases: TestCase[] = [
 		{
 			name: 'basic dbt fixture',
@@ -26,7 +26,7 @@ describe('loadProject (integration)', () => {
 					'__e2e__/fixtures/basics/dbt-artifacts/catalog.json'
 				);
 
-				return new DbtProjectService(manifestPath, catalogPath);
+				return new DbtServiceImpl(manifestPath, catalogPath);
 			},
 		},
 		{
@@ -41,7 +41,7 @@ describe('loadProject (integration)', () => {
 					'../../examples/jaffle-shop/dbt-artifacts/catalog.json'
 				);
 
-				return new DbtProjectService(manifestPath, catalogPath);
+				return new DbtServiceImpl(manifestPath, catalogPath);
 			},
 		},
 	];
@@ -50,7 +50,7 @@ describe('loadProject (integration)', () => {
 		it('loads manifest and catalog', async () => {
 			const service = createService();
 			await service.init();
-			service.parse();
+			service.build();
 
 			expect(service.loaded).toBe(true);
 			expect(service.project).toBeDefined();
@@ -59,7 +59,7 @@ describe('loadProject (integration)', () => {
 		it('populates project nodes and macros', async () => {
 			const service = createService();
 			await service.init();
-			service.parse();
+			service.build();
 
 			expect(Object.keys(service.project.nodes).length).toBeGreaterThan(0);
 			expect(Object.keys(service.project.macros).length).toBeGreaterThanOrEqual(0);
@@ -68,7 +68,7 @@ describe('loadProject (integration)', () => {
 		it('builds all model trees', async () => {
 			const service = createService();
 			await service.init();
-			service.parse();
+			service.build();
 
 			expect(service.tree.project.length).toBeGreaterThan(0);
 			expect(service.tree.database.length).toBeGreaterThan(0);
@@ -78,7 +78,7 @@ describe('loadProject (integration)', () => {
 		it('excludes private and hidden models from trees', async () => {
 			const service = createService();
 			await service.init();
-			service.parse();
+			service.build();
 
 			const allItems = JSON.stringify(service.tree.groups);
 
@@ -89,7 +89,7 @@ describe('loadProject (integration)', () => {
 		it('marks protected models in display name', async () => {
 			const service = createService();
 			await service.init();
-			service.parse();
+			service.build();
 
 			const serialized = JSON.stringify(service.tree.groups);
 
@@ -102,7 +102,7 @@ describe('loadProject (integration)', () => {
 		it('groups models by group property', async () => {
 			const service = createService();
 			await service.init();
-			service.parse();
+			service.build();
 
 			const groups = service.tree.groups.filter(isFolder);
 			expect(groups.length).toBeGreaterThan(0);
@@ -115,7 +115,7 @@ describe('loadProject (integration)', () => {
 		it('builds database tree with schemas', async () => {
 			const service = createService();
 			await service.init();
-			service.parse();
+			service.build();
 
 			const dbTree = service.tree.database.filter(isFolder);
 			expect(dbTree.length).toBeGreaterThan(0);
@@ -127,7 +127,7 @@ describe('loadProject (integration)', () => {
 		it('builds source, exposure, metric, and semantic model trees', async () => {
 			const service = createService();
 			await service.init();
-			service.parse();
+			service.build();
 
 			expect(service.tree.sources.length).toBeGreaterThanOrEqual(0);
 			expect(service.tree.exposures.length).toBeGreaterThanOrEqual(0);
@@ -138,7 +138,7 @@ describe('loadProject (integration)', () => {
 		it('does not throw when optional sections are empty', async () => {
 			const service = createService();
 			await expect(service.init()).resolves.not.toThrow();
-			service.parse();
+			service.build();
 		});
 	});
 });

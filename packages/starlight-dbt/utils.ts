@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { dbtRootIdentifierPrefix } from './constants';
 
 import type { StarlightDbtOptions } from './config';
-import type { ProjectNode, TreeItem, MacroValues, dbtData } from './lib/service/types';
+import type { ProjectNode, TreeItem, MacroValues, DbtService } from './lib/service/types';
 import type { HookParameters } from '@astrojs/starlight/types';
 import type { AstroConfig } from 'astro';
 
@@ -39,7 +39,7 @@ export const getDbtArtifactsAbsolutePath = (filepath: string, astroConfig: Astro
 
 export const getDbtSidebar = (
 	currentSidebar: SidebarItem[],
-	service: dbtData,
+	service: DbtService,
 	baseUrl: string,
 	dbtProjectName: string
 ): SidebarItem[] => {

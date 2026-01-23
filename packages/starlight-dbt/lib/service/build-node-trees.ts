@@ -484,13 +484,13 @@ export function buildGroupTree(
  * @param map - Accumulator for recursion (defaults to empty)
  * @returns Record of unique_id to TreeFile
  */
-export function createNodeMap<T>(
+export function populateNodeMap<T>(
 	items: TreeItem<T>[],
 	map: Record<string, TreeFile<T>> = {}
 ): Record<string, TreeFile<T>> {
 	for (const item of items) {
 		if ('items' in item) {
-			createNodeMap(item.items, map);
+			populateNodeMap(item.items, map);
 		} else {
 			map[item.unique_id] = item;
 		}

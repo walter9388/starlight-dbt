@@ -1,4 +1,4 @@
 declare module 'virtual:dbt-data' {
-	import { dbtData } from './lib/service/types';
-	export const dbtData: dbtData;
+	import { DbtService } from './lib/service/types';
+	export const service: DbtService;
 }
