@@ -22,6 +22,7 @@ Beautiful, customisable, high-performance dbt docs using Starlight (Astro)
   - [ ] make catalog optional
   - [ ] get the typing on the virtual model to work (i.e. `virtual:dbt-data`)
 - [ ] Make `DbtPageTemplate.astro` work well.
+- [ ] improve test coverage on lib (unit testing)
 - [ ] sort out cicd (formatting, linting, testing)
 - [ ] sort out older versions of dbt manifest
 - [ ] Add option to markdown config for it to be before or after dbt component.

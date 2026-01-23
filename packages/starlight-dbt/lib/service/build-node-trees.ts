@@ -11,7 +11,7 @@ import type {
 	TreeItem,
 	TreeNodeType,
 	UnitTestValues,
-} from 'starlight-dbt/types';
+} from './types';
 
 /**
  * Capitalizes the first character of a string.

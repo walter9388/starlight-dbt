@@ -2,9 +2,10 @@ import path from 'node:path';
 
 import { describe, it, expect } from 'vitest';
 
-import { isFolder } from '../../lib/load/buildNodeTrees';
-import { DbtProjectService } from '../../lib/projectService';
-import type { dbtData } from '../../lib/load/types';
+import { isFolder } from '../../lib/service/build-node-trees';
+import { DbtProjectService } from '../../lib/service/project';
+
+import type { dbtData } from '../../lib/service/types';
 
 type TestCase = {
 	name: string;

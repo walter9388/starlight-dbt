@@ -10,7 +10,7 @@ import {
 	buildSemanticModelTree,
 	buildSourceTree,
 	buildUnitTestTree,
-} from './buildNodeTrees';
+} from './build-node-trees';
 import { cleanProjectMacros, incorporate_catalog, getQuoteChar } from './utils';
 
 import type {
@@ -22,7 +22,7 @@ import type {
 	dbtData,
 	TestInfo,
 	FilterProjectNode,
-} from 'starlight-dbt/types';
+} from './types';
 
 /**
  * Load and augment a dbt project from manifest and catalog inputs.

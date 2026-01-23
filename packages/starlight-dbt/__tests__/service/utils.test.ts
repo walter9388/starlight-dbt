@@ -2,14 +2,14 @@ import path from 'node:path';
 
 import { describe, it, expect } from 'vitest';
 
-import { loadManifestV12, loadCatalogV1 } from '../../lib/load/loadArtifacts';
+import { loadManifestV12, loadCatalogV1 } from '../../lib/service/validate-artifacts';
 import {
 	consolidateAdapterMacros,
 	cleanProjectMacros,
 	match_dict_keys,
 	incorporate_catalog,
 	getQuoteChar,
-} from '../../lib/load/utils';
+} from '../../lib/service/utils';
 
 describe('consolidateAdapterMacros', () => {
 	it('groups adapter implementations under the base adapter macro', () => {

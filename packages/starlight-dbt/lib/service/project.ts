@@ -1,8 +1,8 @@
 // adapted from https://github.com/dbt-labs/dbt-docs/blob/e03a7912f50d0ceb770fb77b99a059d57f810a9c/src/app/services/project_service.js
 
-import { createNodeMap } from './load/buildNodeTrees';
-import { loadManifestV12, loadCatalogV1 } from './load/loadArtifacts';
-import { loadProject, populateModelTree } from './load/loadProject';
+import { createNodeMap } from './build-node-trees';
+import { loadManifestV12, loadCatalogV1 } from './validate-artifacts';
+import { loadProject, populateModelTree } from './build-project';
 
 import type {
 	AugmentedCatalogArtifact,
@@ -12,7 +12,7 @@ import type {
 	JsonInput,
 	ManifestArtifact,
 	dbtData,
-} from 'starlight-dbt/types';
+} from './types';
 
 /**
  * DbtProjectService is responsible for loading, parsing, and organising

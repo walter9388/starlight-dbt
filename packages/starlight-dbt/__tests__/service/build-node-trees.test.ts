@@ -13,9 +13,9 @@ import {
 	createNodeMap,
 	isFolder,
 	assertFolder,
-} from '../../lib/load/buildNodeTrees';
+} from '../../lib/service/build-node-trees';
 
-import type { TreeFolder, TreeFile } from 'starlight-dbt/types';
+import type { TreeFolder, TreeFile } from '../../lib/service/types';
 
 describe('buildSourceTree', () => {
 	it('groups sources by source_name, sorts and marks active selection', () => {
