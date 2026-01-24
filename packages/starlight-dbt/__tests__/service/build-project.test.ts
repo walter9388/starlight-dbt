@@ -2,6 +2,7 @@ import path from 'node:path';
 
 import { describe, it, expect } from 'vitest';
 
+import { fetchArtifacts } from '../../lib/manager';
 import { isFolder } from '../../lib/service/build-node-trees';
 import { DbtServiceImpl } from '../../lib/service/project';
 
@@ -9,14 +10,14 @@ import type { DbtService } from '../../lib/service/types';
 
 type TestCase = {
 	name: string;
-	createService: () => DbtService;
+	createService: () => Promise<DbtService>;
 };
 
 describe('buildProject (integration)', () => {
 	const cases: TestCase[] = [
 		{
 			name: 'basic dbt fixture',
-			createService: () => {
+			createService: async () => {
 				const manifestPath = path.resolve(
 					process.cwd(),
 					'__e2e__/fixtures/basics/dbt-artifacts/manifest.json'
@@ -25,13 +26,18 @@ describe('buildProject (integration)', () => {
 					process.cwd(),
 					'__e2e__/fixtures/basics/dbt-artifacts/catalog.json'
 				);
+				const artifacts = await fetchArtifacts({
+					type: 'file',
+					manifest: manifestPath,
+					catalog: catalogPath,
+				});
 
-				return new DbtServiceImpl(manifestPath, catalogPath);
+				return new DbtServiceImpl(artifacts.manifest, artifacts.catalog);
 			},
 		},
 		{
 			name: 'real dbt artifacts (jaffle shop)',
-			createService: () => {
+			createService: async () => {
 				const manifestPath = path.resolve(
 					process.cwd(),
 					'../../examples/jaffle-shop/dbt-artifacts/manifest.json'
@@ -40,15 +46,20 @@ describe('buildProject (integration)', () => {
 					process.cwd(),
 					'../../examples/jaffle-shop/dbt-artifacts/catalog.json'
 				);
+				const artifacts = await fetchArtifacts({
+					type: 'file',
+					manifest: manifestPath,
+					catalog: catalogPath,
+				});
 
-				return new DbtServiceImpl(manifestPath, catalogPath);
+				return new DbtServiceImpl(artifacts.manifest, artifacts.catalog);
 			},
 		},
 	];
 
 	describe.each(cases)('$name', ({ createService }) => {
 		it('loads manifest and catalog', async () => {
-			const service = createService();
+			const service = await createService();
 			await service.init();
 			service.build();
 
@@ -57,7 +68,7 @@ describe('buildProject (integration)', () => {
 		});
 
 		it('populates project nodes and macros', async () => {
-			const service = createService();
+			const service = await createService();
 			await service.init();
 			service.build();
 
@@ -66,7 +77,7 @@ describe('buildProject (integration)', () => {
 		});
 
 		it('builds all model trees', async () => {
-			const service = createService();
+			const service = await createService();
 			await service.init();
 			service.build();
 
@@ -76,7 +87,7 @@ describe('buildProject (integration)', () => {
 		});
 
 		it('excludes private and hidden models from trees', async () => {
-			const service = createService();
+			const service = await createService();
 			await service.init();
 			service.build();
 
@@ -87,7 +98,7 @@ describe('buildProject (integration)', () => {
 		});
 
 		it('marks protected models in display name', async () => {
-			const service = createService();
+			const service = await createService();
 			await service.init();
 			service.build();
 
@@ -100,7 +111,7 @@ describe('buildProject (integration)', () => {
 		});
 
 		it('groups models by group property', async () => {
-			const service = createService();
+			const service = await createService();
 			await service.init();
 			service.build();
 
@@ -113,7 +124,7 @@ describe('buildProject (integration)', () => {
 		});
 
 		it('builds database tree with schemas', async () => {
-			const service = createService();
+			const service = await createService();
 			await service.init();
 			service.build();
 
@@ -125,7 +136,7 @@ describe('buildProject (integration)', () => {
 		});
 
 		it('builds source, exposure, metric, and semantic model trees', async () => {
-			const service = createService();
+			const service = await createService();
 			await service.init();
 			service.build();
 
@@ -136,7 +147,7 @@ describe('buildProject (integration)', () => {
 		});
 
 		it('does not throw when optional sections are empty', async () => {
-			const service = createService();
+			const service = await createService();
 			await expect(service.init()).resolves.not.toThrow();
 			service.build();
 		});

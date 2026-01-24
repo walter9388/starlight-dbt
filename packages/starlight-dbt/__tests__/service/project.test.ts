@@ -2,6 +2,7 @@ import path from 'node:path';
 
 import { describe, it, expect } from 'vitest';
 
+import { fetchArtifacts } from '../../lib/manager';
 import { createDbtService } from '../../lib/service/project';
 
 describe('Project service', () => {
@@ -19,7 +20,12 @@ describe('Project service', () => {
 		console.log('  manifest:', manifestPath);
 		console.log('  catalog :', catalogPath);
 
-		const service = await createDbtService({ manifest: manifestPath, catalog: catalogPath });
+		const artifacts = await fetchArtifacts({
+			type: 'file',
+			manifest: manifestPath,
+			catalog: catalogPath,
+		});
+		const service = await createDbtService(artifacts);
 
 		console.log('✔ Project loaded successfully');
 		console.log('Nodes:', Object.keys(service.project.nodes).length);

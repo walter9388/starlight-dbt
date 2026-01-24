@@ -2,7 +2,8 @@ import path from 'node:path';
 
 import { describe, it, expect } from 'vitest';
 
-import { loadManifestV12, loadCatalogV1 } from '../../lib/service/validate-artifacts';
+import { fetchArtifacts } from '../../lib/manager';
+import { parseDbtManifest, parseDbtCatalog } from '../../lib/service/parse-artifacts';
 import {
 	consolidateAdapterMacros,
 	cleanProjectMacros,
@@ -157,8 +158,13 @@ describe('incorporate_catalog', () => {
 			process.cwd(),
 			'__e2e__/fixtures/basics/dbt-artifacts/catalog.json'
 		);
-		const testManifest = await loadManifestV12(testManifestPath);
-		const testCatalog = await loadCatalogV1(testCatalogPath);
+		const artifacts = await fetchArtifacts({
+			type: 'file',
+			manifest: testManifestPath,
+			catalog: testCatalogPath,
+		});
+		const testManifest = await parseDbtManifest(artifacts.manifest);
+		const testCatalog = await parseDbtCatalog(artifacts.catalog);
 
 		const merged = incorporate_catalog(testManifest, testCatalog);
 

@@ -13,19 +13,6 @@ import type {
 } from '@yu-iskw/dbt-artifacts-parser/dist/manifest';
 
 /**
- * Input accepted by artifact loaders.
- *
- * - A parsed JSON object
- * - A file path pointing to a JSON file
- */
-export type JsonInput = string | Record<string, unknown>;
-
-export interface DbtArtifacts {
-	manifest: JsonInput;
-	catalog: JsonInput;
-}
-
-/**
  * Metadata attached to a column-level dbt test.
  *
  * This is derived from `test_metadata` and normalized

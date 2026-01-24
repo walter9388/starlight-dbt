@@ -1,15 +1,14 @@
 // adapted from https://github.com/dbt-labs/dbt-docs/blob/e03a7912f50d0ceb770fb77b99a059d57f810a9c/src/app/services/project_service.js
 
 import { populateNodeMap } from './build-node-trees';
-import { loadManifestV12, loadCatalogV1 } from './validate-artifacts';
 import { buildProject, populateModelTree } from './build-project';
+import { parseDbtManifest, parseDbtCatalog } from './parse-artifacts';
 
 import type {
 	AugmentedCatalogArtifact,
 	AugmentedManifestArtifact,
 	CatalogArtifact,
 	DbtArtifacts,
-	JsonInput,
 	ManifestArtifact,
 	DbtService,
 } from './types';
@@ -53,8 +52,8 @@ export class DbtServiceImpl implements DbtService {
 	loaded = false;
 
 	constructor(
-		private readonly manifestInput: JsonInput,
-		private readonly catalogInput: JsonInput
+		private readonly manifestInput: Record<string, unknown>,
+		private readonly catalogInput: Record<string, unknown>
 	) {}
 
 	/**
@@ -63,8 +62,8 @@ export class DbtServiceImpl implements DbtService {
 	 * This must be called before `build()` or `populate_node_map()`.
 	 */
 	async init(): Promise<void> {
-		this.files.manifest = await loadManifestV12(this.manifestInput);
-		this.files.catalog = await loadCatalogV1(this.catalogInput);
+		this.files.manifest = await parseDbtManifest(this.manifestInput);
+		this.files.catalog = await parseDbtCatalog(this.catalogInput);
 		this.loaded = true;
 	}
 
