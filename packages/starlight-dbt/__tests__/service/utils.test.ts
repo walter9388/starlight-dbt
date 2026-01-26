@@ -152,11 +152,11 @@ describe('incorporate_catalog', () => {
 	it('copies sources into nodes and remaps column keys to catalog column names', async () => {
 		const testManifestPath = path.resolve(
 			process.cwd(),
-			'__e2e__/fixtures/basics/src/content/dbt/manifest.json'
+			'__e2e__/fixtures/basics/src/content/dbt/default/manifest.json'
 		);
 		const testCatalogPath = path.resolve(
 			process.cwd(),
-			'__e2e__/fixtures/basics/src/content/dbt/catalog.json'
+			'__e2e__/fixtures/basics/src/content/dbt/default/catalog.json'
 		);
 		const artifacts = await fetchArtifacts({
 			type: 'file',

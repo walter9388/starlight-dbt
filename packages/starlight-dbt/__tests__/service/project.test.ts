@@ -9,11 +9,11 @@ describe('Project service', () => {
 	it('loads manifest and catalog and initializes project', async () => {
 		const manifestPath = path.resolve(
 			process.cwd(),
-			'../../examples/jaffle-shop/src/content/dbt/manifest.json'
+			'../../examples/jaffle-shop/src/content/dbt/jaffle_shop/manifest.json'
 		);
 		const catalogPath = path.resolve(
 			process.cwd(),
-			'../../examples/jaffle-shop/src/content/dbt/catalog.json'
+			'../../examples/jaffle-shop/src/content/dbt/jaffle_shop/catalog.json'
 		);
 
 		console.log('Loading dbt artifacts:');

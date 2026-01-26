@@ -41,7 +41,7 @@ export default function starlightDbtPlugin(userOptions?: StarlightDbtUserOptions
 							starlightConfig.sidebar ?? [],
 							service,
 							config.basePath,
-							'Default dbt Project'
+							config.project
 						),
 						components: {
 							...starlightConfig.components,
@@ -61,7 +61,7 @@ export default function starlightDbtPlugin(userOptions?: StarlightDbtUserOptions
 					hooks: {
 						'astro:config:setup': ({ injectRoute, updateConfig }) => {
 							injectRoute({
-								pattern: `${config.basePath}/[...slug]`,
+								pattern: `[...slug]`,
 								entrypoint: getPageTemplatePath(config),
 							});
 

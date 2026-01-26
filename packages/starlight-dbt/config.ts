@@ -6,6 +6,7 @@ export const StarlightDbtOptionsSchema = z
 		catalog: z.string().default('src/content/dbt/catalog.json'),
 		template: z.string().optional(),
 		basePath: z.string().default('dbt'),
+		project: z.string().default('Default dbt Project'),
 	})
 	.default({});
 

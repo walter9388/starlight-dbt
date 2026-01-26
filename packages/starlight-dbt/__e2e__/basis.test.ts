@@ -1,6 +1,7 @@
 import { expect, testFactory, expandAllDbtFolders, expandDbtRoot } from './test-utils';
 
 const test = testFactory('./fixtures/basics/');
+const baseUrl = `/dbt/default`;
 
 test.describe('Pages', () => {
 	test.describe('Starlight', () => {
@@ -51,7 +52,7 @@ test.describe('Pages', () => {
 				test(`renders a dbt ${type} page (${id})`, async ({ page, getProdServer }) => {
 					const starlight = await getProdServer();
 
-					const response = await starlight.goto(`/dbt/${id}`);
+					const response = await starlight.goto(`${baseUrl}/${id}`);
 					expect(response?.ok()).toBe(true);
 
 					const heading = page.locator('h1');
@@ -64,7 +65,7 @@ test.describe('Pages', () => {
 			test('does not render hidden model page', async ({ getProdServer }) => {
 				const starlight = await getProdServer();
 
-				const response = await starlight.goto('/dbt/model.test_pkg.hidden_model');
+				const response = await starlight.goto(`${baseUrl}/model.test_pkg.hidden_model`);
 				expect(response?.status()).toBe(404);
 			});
 		});
@@ -178,7 +179,7 @@ test.describe('Sidebar Functionality', () => {
 			getProdServer,
 		}) => {
 			const starlight = await getProdServer();
-			await starlight.goto('/dbt/model.test_pkg.model_node');
+			await starlight.goto(`${baseUrl}/model.test_pkg.model_node`);
 			await expandDbtRoot(page);
 
 			// Look for the active link specifically within the dbt root
@@ -195,7 +196,7 @@ test.describe('Sidebar Functionality', () => {
 			getProdServer,
 		}) => {
 			const starlight = await getProdServer();
-			await starlight.goto('/dbt/model.test_pkg.model_node');
+			await starlight.goto(`${baseUrl}/model.test_pkg.model_node`);
 			await expandDbtRoot(page);
 
 			// Switch to Database View
@@ -215,7 +216,7 @@ test.describe('Sidebar Functionality', () => {
 			getProdServer,
 		}) => {
 			const starlight = await getProdServer();
-			await starlight.goto('/dbt/model.test_pkg.model_node');
+			await starlight.goto(`${baseUrl}/model.test_pkg.model_node`);
 			await expandDbtRoot(page);
 
 			// Nested folder summary should have the highlight style
@@ -239,7 +240,7 @@ test.describe('Sidebar Functionality', () => {
 		}) => {
 			const starlight = await getProdServer();
 			// Using an analysis node (ensure this URL is correct in your fixture!)
-			await starlight.goto('/dbt/analysis.test_pkg.analysis_node');
+			await starlight.goto(`${baseUrl}/analysis.test_pkg.analysis_node`);
 			await expandDbtRoot(page);
 
 			// Switch to Database view (where analysis is presumably hidden)
@@ -257,7 +258,7 @@ test.describe('Sidebar Functionality', () => {
 			getProdServer,
 		}) => {
 			const starlight = await getProdServer();
-			await starlight.goto('/dbt/source.test_pkg.s1.source1');
+			await starlight.goto(`${baseUrl}/source.test_pkg.s1.source1`);
 			await expandDbtRoot(page);
 
 			await page.locator('label[for="v-database"]').click();

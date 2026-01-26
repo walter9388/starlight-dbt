@@ -22,7 +22,25 @@ export default defineConfig({
 					autogenerate: { directory: 'reference' },
 				},
 			],
-			plugins: [dbtPlugin()],
+			plugins: [
+				dbtPlugin({
+					// sidebar: [
+					// 	{
+					// 		label: 'Projects',
+					// 		autogenerate: { directory: 'reference' },
+					// 		items: [{ label: 'Project A', slug: 'projects/project_a' }],
+					// 	},
+					// 	{
+					// 		label: 'Project B',
+					// 		slug: 'dev/project_b',
+					// 	},
+					// ],
+
+					manifest: 'src/content/dbt/jaffle_shop/manifest.json',
+					catalog: 'src/content/dbt/jaffle_shop/catalog.json',
+					project: 'jaffle_shop',
+				}),
+			],
 		}),
 	],
 });

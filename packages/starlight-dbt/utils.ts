@@ -43,9 +43,10 @@ export const getDbtSidebar = (
 	baseUrl: string,
 	dbtProjectName: string
 ): SidebarItem[] => {
-	const dbtDatabaseSidebar = extractNestedSidebar(service.tree.database, baseUrl, 'database');
-	const dbtProjectSidebar = extractNestedSidebar(service.tree.project, baseUrl, 'project');
-	const dbtGroupsSidebar = extractNestedSidebar(service.tree.groups, baseUrl, 'group');
+	const fullBaseUrl = `${baseUrl}/${dbtProjectName}`;
+	const dbtDatabaseSidebar = extractNestedSidebar(service.tree.database, fullBaseUrl, 'database');
+	const dbtProjectSidebar = extractNestedSidebar(service.tree.project, fullBaseUrl, 'project');
+	const dbtGroupsSidebar = extractNestedSidebar(service.tree.groups, fullBaseUrl, 'group');
 	currentSidebar.push({
 		label: dbtRootIdentifierPrefix + dbtProjectName,
 		items: [...dbtDatabaseSidebar, ...dbtProjectSidebar, ...dbtGroupsSidebar],

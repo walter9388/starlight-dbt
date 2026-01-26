@@ -26,12 +26,14 @@
   "types": "./index.ts",
   "files": [
     "index.ts",
+    "loaders.ts",
     "virtual.d.ts",
     "components",
     "lib"
   ],
   "exports": {
     ".": "./index.ts",
+    "./loaders": "./loaders.ts",
     "./types": "./lib/service/types.ts",
     "./components/DbtSidebar.astro": "./components/DbtSidebar.astro"
   },
