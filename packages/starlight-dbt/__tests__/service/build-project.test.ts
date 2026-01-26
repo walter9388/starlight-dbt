@@ -20,11 +20,11 @@ describe('buildProject (integration)', () => {
 			createService: async () => {
 				const manifestPath = path.resolve(
 					process.cwd(),
-					'__e2e__/fixtures/basics/dbt-artifacts/manifest.json'
+					'__e2e__/fixtures/basics/src/content/dbt/manifest.json'
 				);
 				const catalogPath = path.resolve(
 					process.cwd(),
-					'__e2e__/fixtures/basics/dbt-artifacts/catalog.json'
+					'__e2e__/fixtures/basics/src/content/dbt/catalog.json'
 				);
 				const artifacts = await fetchArtifacts({
 					type: 'file',
@@ -40,11 +40,11 @@ describe('buildProject (integration)', () => {
 			createService: async () => {
 				const manifestPath = path.resolve(
 					process.cwd(),
-					'../../examples/jaffle-shop/dbt-artifacts/manifest.json'
+					'../../examples/jaffle-shop/src/content/dbt/manifest.json'
 				);
 				const catalogPath = path.resolve(
 					process.cwd(),
-					'../../examples/jaffle-shop/dbt-artifacts/catalog.json'
+					'../../examples/jaffle-shop/src/content/dbt/catalog.json'
 				);
 				const artifacts = await fetchArtifacts({
 					type: 'file',
