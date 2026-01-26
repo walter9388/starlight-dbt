@@ -5,7 +5,8 @@ export const StarlightDbtOptionsSchema = z
 		manifest: z.string().default('src/content/dbt/manifest.json'),
 		catalog: z.string().default('src/content/dbt/catalog.json'),
 		template: z.string().optional(),
-		basePath: z.string().default('dbt'),
+		baseUrl: z.string().default('dbt'),
+		baseDir: z.string().default('src/content/dbt'),
 		project: z.string().default('Default dbt Project'),
 	})
 	.default({});

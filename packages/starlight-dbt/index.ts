@@ -40,7 +40,7 @@ export default function starlightDbtPlugin(userOptions?: StarlightDbtUserOptions
 						sidebar: getDbtSidebar(
 							starlightConfig.sidebar ?? [],
 							service,
-							config.basePath,
+							config.baseUrl,
 							config.project
 						),
 						components: {
@@ -59,10 +59,34 @@ export default function starlightDbtPlugin(userOptions?: StarlightDbtUserOptions
 				addIntegration({
 					name: 'starlight-dbt-integration',
 					hooks: {
-						'astro:config:setup': ({ injectRoute }) => {
+						'astro:config:setup': ({ injectRoute, updateConfig }) => {
 							injectRoute({
 								pattern: `[...slug]`,
 								entrypoint: getPageTemplatePath(config),
+							});
+
+							// Virtual module to expose dbt project config to the loader
+							const virtualModuleId = 'virtual:starlight-dbt/config';
+							const resolvedVirtualModuleId = '\0' + virtualModuleId;
+							updateConfig({
+								vite: {
+									plugins: [
+										{
+											name: 'starlight-dbt-virtual-config',
+											resolveId(id) {
+												if (id === virtualModuleId) return resolvedVirtualModuleId;
+
+												return null;
+											},
+											load(id) {
+												if (id === resolvedVirtualModuleId) {
+													return `export const config = ${JSON.stringify(config)};`;
+												}
+												return null;
+											},
+										},
+									],
+								},
 							});
 						},
 					},
