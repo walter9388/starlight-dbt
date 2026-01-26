@@ -27,7 +27,6 @@
   "files": [
     "index.ts",
     "loaders.ts",
-    "virtual.d.ts",
     "components",
     "lib"
   ],

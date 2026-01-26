@@ -1,10 +1,11 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import type { Loader } from 'astro/loaders';
 import { getOrInitDbtService } from './lib/manager';
 
-export function dbtLoader(options: { baseDir?: string, baseUrl?: string } = {}): Loader {
+import type { Loader } from 'astro/loaders';
+
+export function dbtLoader(options: { baseDir?: string; baseUrl?: string } = {}): Loader {
 	return {
 		name: 'dbt-loader',
 		load: async ({ store, logger, parseData }) => {

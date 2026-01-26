@@ -59,32 +59,10 @@ export default function starlightDbtPlugin(userOptions?: StarlightDbtUserOptions
 				addIntegration({
 					name: 'starlight-dbt-integration',
 					hooks: {
-						'astro:config:setup': ({ injectRoute, updateConfig }) => {
+						'astro:config:setup': ({ injectRoute }) => {
 							injectRoute({
 								pattern: `[...slug]`,
 								entrypoint: getPageTemplatePath(config),
-							});
-
-							const virtualModuleId = 'virtual:dbt-data';
-							const resolvedVirtualModuleId = '\0' + virtualModuleId;
-							updateConfig({
-								vite: {
-									plugins: [
-										{
-											name: 'vite-plugin-dbt-data',
-											resolveId(id) {
-												if (id === virtualModuleId) return resolvedVirtualModuleId;
-												return null;
-											},
-											load(id) {
-												if (id === resolvedVirtualModuleId) {
-													return `export const service = ${JSON.stringify(service)};`;
-												}
-												return null;
-											},
-										},
-									],
-								},
 							});
 						},
 					},
