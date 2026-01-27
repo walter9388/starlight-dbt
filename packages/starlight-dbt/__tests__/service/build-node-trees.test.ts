@@ -10,12 +10,12 @@ import {
 	buildDatabaseTree,
 	buildGroupTree,
 	buildUnitTestTree,
-	createNodeMap,
+	populateNodeMap,
 	isFolder,
 	assertFolder,
-} from '../../lib/load/buildNodeTrees';
+} from '../../lib/service/build-node-trees';
 
-import type { TreeFolder, TreeFile } from 'starlight-dbt/types';
+import type { TreeFolder, TreeFile } from '../../lib/service/types';
 
 describe('buildSourceTree', () => {
 	it('groups sources by source_name, sorts and marks active selection', () => {
@@ -510,7 +510,7 @@ describe('buildGroupTree', () => {
 	});
 });
 
-describe('createNodeMap', () => {
+describe('populateNodeMap', () => {
 	it('should flatten a nested tree into a single lookup record', () => {
 		const mockTree = [
 			{
@@ -538,7 +538,7 @@ describe('createNodeMap', () => {
 			},
 		];
 
-		const result = createNodeMap(mockTree as any);
+		const result = populateNodeMap(mockTree as any);
 
 		// Verify O(1) style lookups
 		expect(result['model.a']).toBeDefined();
@@ -552,7 +552,7 @@ describe('createNodeMap', () => {
 	});
 
 	it('should return an empty object when passed an empty tree', () => {
-		const result = createNodeMap([]);
+		const result = populateNodeMap([]);
 		expect(result).toEqual({});
 	});
 
@@ -582,7 +582,7 @@ describe('createNodeMap', () => {
 			},
 		];
 
-		const result = createNodeMap(deepTree as any);
+		const result = populateNodeMap(deepTree as any);
 		expect(result['deep.node']).toBeDefined();
 	});
 });

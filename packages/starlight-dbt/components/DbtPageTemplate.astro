@@ -1,21 +1,23 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import { dbtData } from 'virtual:dbt-data';
+import { getCollection } from 'astro:content';
 
 export async function getStaticPaths() {
-	// Generate a page for every node in dbtData
-	return Object.values(dbtData.id_map).map((node) => {
+	const dbtEntries = await getCollection('dbt');
+	return dbtEntries.map((entry) => {
 		return {
-			params: { slug: node.unique_id }, // This becomes /docs/dbt/model.my_project.my_model
-			props: { node },
+			params: { slug: entry.id },
+			props: { entry },
 		};
 	});
 }
 
-const { node } = Astro.props;
+const { entry } = Astro.props;
+const node = entry.data; // This is the validated node data from your schema
 ---
 
 <StarlightPage frontmatter={{ title: node.name }}>
-	<p>This page was generated statically for {node.unique_id}</p>
+	<p>This page was generated from the Content Layer for <strong>{entry.id}</strong></p>
+	<p>Project: {node._projectName}</p>
 	<pre>{JSON.stringify(node, null, 2)}</pre>
 </StarlightPage>

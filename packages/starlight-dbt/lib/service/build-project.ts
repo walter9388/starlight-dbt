@@ -10,29 +10,26 @@ import {
 	buildSemanticModelTree,
 	buildSourceTree,
 	buildUnitTestTree,
-} from './buildNodeTrees';
-import { loadManifestV12, loadCatalogV1 } from './loadArtifacts';
+} from './build-node-trees';
 import { cleanProjectMacros, incorporate_catalog, getQuoteChar } from './utils';
 
 import type {
 	AugmentedMacros,
 	AugmentedColumnNode,
-	JsonInput,
 	ManifestArtifact,
 	ManifestNode,
 	Project,
-	dbtData,
+	DbtService,
 	TestInfo,
 	FilterProjectNode,
-} from 'starlight-dbt/types';
+} from './types';
 
 /**
  * Load and augment a dbt project from manifest and catalog inputs.
  *
  * This function performs the following high-level steps:
- * - Parses the manifest and catalog inputs (accepts either file paths or
- *   already-parsed JSON objects).
- * - Re-attaches sources, exposures, metrics, semantic models, saved queries,
+ * - Takes pre-parsed manifest and catalog jsons from `service.files`.
+ * - Attaches sources, exposures, metrics, semantic models, saved queries,
  *   and unit tests into the manifest `nodes` map so site/UI code can treat
  *   them uniformly.
  * - Cleans and consolidates macros (removing internal `dbt` macros and
@@ -45,22 +42,9 @@ import type {
  * will be set to the resulting merged project and `service.loaded` will be
  * set to `true` on success.
  *
- * @param service - dbtData to populate
- * @param manifestInput - File path or parsed manifest JSON
- * @param catalogInput - File path or parsed catalog JSON
+ * @param service - DbtService to populate
  */
-export const loadProject = async function (
-	service: dbtData,
-	manifestInput: JsonInput,
-	catalogInput: JsonInput
-) {
-	const manifest = await loadManifestV12(manifestInput);
-	const catalog = await loadCatalogV1(catalogInput);
-
-	// assign raw manifest first
-	service.files.manifest = manifest;
-	service.files.catalog = catalog;
-
+export const buildProject = function (service: DbtService) {
 	// Set node labels (temporarily narrow to ManifestArtifact nodes)
 	Object.values(service.files.manifest.nodes as Record<string, ManifestNode>).forEach((node) => {
 		node.label =
@@ -231,7 +215,7 @@ export const loadProject = async function (
 };
 
 /**
- * Populates the various hierarchical project trees in the given `dbtData`.
+ * Populates the various hierarchical project trees in the given `DbtService`.
  *
  * - Filters nodes from the project by accepted resource types and custom tests.
  * - Extracts macros from the project.
@@ -246,10 +230,10 @@ export const loadProject = async function (
  *   - saved queries (`buildSavedQueryTree`)
  * - Assigns the resulting trees to `service.tree`.
  *
- * @param service - The `dbtData` instance containing project nodes, macros, and tree storage
+ * @param service - The `DbtService` instance containing project nodes, macros, and tree storage
  * @returns Promise<void> that resolves when all trees have been populated
  */
-export const populateModelTree = function (service: dbtData) {
+export const populateModelTree = function (service: DbtService) {
 	// get nodes/macros from service.project
 	const acceptedNodeTypes = [
 		'snapshot',

@@ -13,7 +13,13 @@ export default defineConfig({
 					autogenerate: { directory: 'examples' },
 				},
 			],
-			plugins: [dbtPlugin()],
+			plugins: [
+				dbtPlugin({
+					manifest: 'src/content/dbt/default/manifest.json',
+					catalog: 'src/content/dbt/default/catalog.json',
+					project: 'default',
+				}),
+			],
 		}),
 	],
 });

@@ -1,4 +1,3 @@
-declare module 'virtual:dbt-data' {
-	import { dbtData } from 'starlight-dbt/types';
-	export const dbtData: dbtData;
+declare module 'virtual:starlight-dbt/config' {
+	export const config: import('./config').StarlightDbtOptions;
 }

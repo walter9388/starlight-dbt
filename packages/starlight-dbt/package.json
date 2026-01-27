@@ -18,19 +18,23 @@
     "documentation",
     "astro",
     "withastro",
-    "astro-integration"
+    "astro-integration",
+    "starlight",
+    "starlight-integation"
   ],
   "main": "./index.ts",
   "types": "./index.ts",
   "files": [
     "index.ts",
+    "loaders.ts",
     "virtual.d.ts",
     "components",
     "lib"
   ],
   "exports": {
     ".": "./index.ts",
-    "./types": "./lib/load/types.ts",
+    "./loaders": "./loaders.ts",
+    "./types": "./lib/service/types.ts",
     "./components/DbtSidebar.astro": "./components/DbtSidebar.astro"
   },
   "peerDependencies": {

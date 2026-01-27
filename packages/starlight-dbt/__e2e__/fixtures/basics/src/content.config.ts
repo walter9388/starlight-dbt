@@ -1,8 +1,9 @@
 import { docsLoader } from '@astrojs/starlight/loaders';
 import { docsSchema } from '@astrojs/starlight/schema';
 import { defineCollection } from 'astro:content';
+import { dbtLoader } from 'starlight-dbt/loaders';
 
 export const collections = {
-	// default starlight docs collection
 	docs: defineCollection({ loader: docsLoader(), schema: docsSchema() }),
+	dbt: defineCollection({ loader: dbtLoader() }),
 };

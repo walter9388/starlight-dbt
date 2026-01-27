@@ -1,7 +1,7 @@
 import { AstroError } from 'astro/errors';
 
 import { StarlightDbtOptionsSchema, type StarlightDbtUserOptions } from './config';
-import { createProjectService } from './lib/projectService';
+import { getOrInitDbtService } from './lib/manager';
 import { getDbtArtifactsAbsolutePath, getPageTemplatePath, getDbtSidebar } from './utils';
 
 import type { StarlightPlugin } from '@astrojs/starlight/types';
@@ -29,20 +29,19 @@ export default function starlightDbtPlugin(userOptions?: StarlightDbtUserOptions
 			}) {
 				logger.info(`Using manifest: ${config.manifest}`);
 				logger.info(`Using catalog: ${config.catalog}`);
-				const service = createProjectService(
-					getDbtArtifactsAbsolutePath(config.manifest, astroConfig),
-					getDbtArtifactsAbsolutePath(config.catalog, astroConfig)
-				);
-				await service.init();
-				service.create_id_map();
+				const service = await getOrInitDbtService('default', {
+					type: 'file',
+					manifest: getDbtArtifactsAbsolutePath(config.manifest, astroConfig),
+					catalog: getDbtArtifactsAbsolutePath(config.catalog, astroConfig),
+				});
 
 				try {
 					updateConfig({
 						sidebar: getDbtSidebar(
 							starlightConfig.sidebar ?? [],
 							service,
-							config.basePath,
-							'Default dbt Project'
+							config.baseUrl,
+							config.project
 						),
 						components: {
 							...starlightConfig.components,
@@ -62,24 +61,26 @@ export default function starlightDbtPlugin(userOptions?: StarlightDbtUserOptions
 					hooks: {
 						'astro:config:setup': ({ injectRoute, updateConfig }) => {
 							injectRoute({
-								pattern: `${config.basePath}/[...slug]`,
+								pattern: `[...slug]`,
 								entrypoint: getPageTemplatePath(config),
 							});
 
-							const virtualModuleId = 'virtual:dbt-data';
+							// Virtual module to expose dbt project config to the loader
+							const virtualModuleId = 'virtual:starlight-dbt/config';
 							const resolvedVirtualModuleId = '\0' + virtualModuleId;
 							updateConfig({
 								vite: {
 									plugins: [
 										{
-											name: 'vite-plugin-dbt-data',
+											name: 'starlight-dbt-virtual-config',
 											resolveId(id) {
 												if (id === virtualModuleId) return resolvedVirtualModuleId;
+
 												return null;
 											},
 											load(id) {
 												if (id === resolvedVirtualModuleId) {
-													return `export const dbtData = ${JSON.stringify(service)};`;
+													return `export const config = ${JSON.stringify(config)};`;
 												}
 												return null;
 											},

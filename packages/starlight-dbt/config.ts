@@ -2,10 +2,12 @@ import { z } from 'astro/zod';
 
 export const StarlightDbtOptionsSchema = z
 	.object({
-		manifest: z.string().default('dbt-artifacts/manifest.json'),
-		catalog: z.string().default('dbt-artifacts/catalog.json'),
+		manifest: z.string().default('src/content/dbt/manifest.json'),
+		catalog: z.string().default('src/content/dbt/catalog.json'),
 		template: z.string().optional(),
-		basePath: z.string().default('dbt'),
+		baseUrl: z.string().default('dbt'),
+		baseDir: z.string().default('src/content/dbt'),
+		project: z.string().default('Default dbt Project'),
 	})
 	.default({});
 

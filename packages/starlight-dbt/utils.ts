@@ -5,9 +5,9 @@ import { fileURLToPath } from 'node:url';
 import { dbtRootIdentifierPrefix } from './constants';
 
 import type { StarlightDbtOptions } from './config';
+import type { ProjectNode, TreeItem, MacroValues, DbtService } from './lib/service/types';
 import type { HookParameters } from '@astrojs/starlight/types';
 import type { AstroConfig } from 'astro';
-import type { ProjectNode, TreeItem, MacroValues, dbtData } from 'starlight-dbt/types';
 
 export type StarlightUserConfig = HookParameters<'config:setup'>['config'];
 type SidebarItem = NonNullable<StarlightUserConfig['sidebar']>[number];
@@ -39,13 +39,14 @@ export const getDbtArtifactsAbsolutePath = (filepath: string, astroConfig: Astro
 
 export const getDbtSidebar = (
 	currentSidebar: SidebarItem[],
-	service: dbtData,
+	service: DbtService,
 	baseUrl: string,
 	dbtProjectName: string
 ): SidebarItem[] => {
-	const dbtDatabaseSidebar = extractNestedSidebar(service.tree.database, baseUrl, 'database');
-	const dbtProjectSidebar = extractNestedSidebar(service.tree.project, baseUrl, 'project');
-	const dbtGroupsSidebar = extractNestedSidebar(service.tree.groups, baseUrl, 'group');
+	const fullBaseUrl = `${baseUrl}/${dbtProjectName}`;
+	const dbtDatabaseSidebar = extractNestedSidebar(service.tree.database, fullBaseUrl, 'database');
+	const dbtProjectSidebar = extractNestedSidebar(service.tree.project, fullBaseUrl, 'project');
+	const dbtGroupsSidebar = extractNestedSidebar(service.tree.groups, fullBaseUrl, 'group');
 	currentSidebar.push({
 		label: dbtRootIdentifierPrefix + dbtProjectName,
 		items: [...dbtDatabaseSidebar, ...dbtProjectSidebar, ...dbtGroupsSidebar],

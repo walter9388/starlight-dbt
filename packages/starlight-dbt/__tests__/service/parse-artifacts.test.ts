@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 
-import { loadManifestV12, loadCatalogV1 } from '../../lib/load/loadArtifacts';
+import { parseDbtManifest, parseDbtCatalog } from '../../lib/service/parse-artifacts';
 
-describe('loadManifestV12', () => {
+describe('parseDbtManifest', () => {
 	it('parses a valid manifest v12', async () => {
 		const manifestV12 = {
 			metadata: {
@@ -17,7 +17,7 @@ describe('loadManifestV12', () => {
 			semantic_models: {},
 		};
 
-		await expect(loadManifestV12(manifestV12)).resolves.toBeDefined();
+		await expect(parseDbtManifest(manifestV12)).resolves.toBeDefined();
 	});
 
 	it('fails when parsing manifest v11', async () => {
@@ -30,11 +30,11 @@ describe('loadManifestV12', () => {
 			macros: {},
 		};
 
-		await expect(loadManifestV12(manifestV11)).rejects.toThrow();
+		await expect(parseDbtManifest(manifestV11)).rejects.toThrow();
 	});
 });
 
-describe('loadCatalogV1', () => {
+describe('parseDbtCatalog', () => {
 	it('parses a valid catalog v1', async () => {
 		const catalogV1 = {
 			metadata: {
@@ -44,7 +44,7 @@ describe('loadCatalogV1', () => {
 			sources: {},
 		};
 
-		await expect(loadCatalogV1(catalogV1)).resolves.toBeDefined();
+		await expect(parseDbtCatalog(catalogV1)).resolves.toBeDefined();
 	});
 
 	it('fails when parsing an unsupported catalog version', async () => {
@@ -56,6 +56,6 @@ describe('loadCatalogV1', () => {
 			sources: {},
 		};
 
-		await expect(loadCatalogV1(catalogV2)).rejects.toThrow();
+		await expect(parseDbtCatalog(catalogV2)).rejects.toThrow();
 	});
 });

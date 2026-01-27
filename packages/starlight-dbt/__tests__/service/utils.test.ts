@@ -2,14 +2,15 @@ import path from 'node:path';
 
 import { describe, it, expect } from 'vitest';
 
-import { loadManifestV12, loadCatalogV1 } from '../../lib/load/loadArtifacts';
+import { fetchArtifacts } from '../../lib/manager';
+import { parseDbtManifest, parseDbtCatalog } from '../../lib/service/parse-artifacts';
 import {
 	consolidateAdapterMacros,
 	cleanProjectMacros,
 	match_dict_keys,
 	incorporate_catalog,
 	getQuoteChar,
-} from '../../lib/load/utils';
+} from '../../lib/service/utils';
 
 describe('consolidateAdapterMacros', () => {
 	it('groups adapter implementations under the base adapter macro', () => {
@@ -151,14 +152,19 @@ describe('incorporate_catalog', () => {
 	it('copies sources into nodes and remaps column keys to catalog column names', async () => {
 		const testManifestPath = path.resolve(
 			process.cwd(),
-			'__e2e__/fixtures/basics/dbt-artifacts/manifest.json'
+			'__e2e__/fixtures/basics/src/content/dbt/default/manifest.json'
 		);
 		const testCatalogPath = path.resolve(
 			process.cwd(),
-			'__e2e__/fixtures/basics/dbt-artifacts/catalog.json'
+			'__e2e__/fixtures/basics/src/content/dbt/default/catalog.json'
 		);
-		const testManifest = await loadManifestV12(testManifestPath);
-		const testCatalog = await loadCatalogV1(testCatalogPath);
+		const artifacts = await fetchArtifacts({
+			type: 'file',
+			manifest: testManifestPath,
+			catalog: testCatalogPath,
+		});
+		const testManifest = await parseDbtManifest(artifacts.manifest);
+		const testCatalog = await parseDbtCatalog(artifacts.catalog);
 
 		const merged = incorporate_catalog(testManifest, testCatalog);
 

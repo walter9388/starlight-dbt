@@ -2,68 +2,84 @@ import path from 'node:path';
 
 import { describe, it, expect } from 'vitest';
 
-import { isFolder } from '../../lib/load/buildNodeTrees';
-import { createProjectService } from '../../lib/projectService';
+import { fetchArtifacts } from '../../lib/manager';
+import { isFolder } from '../../lib/service/build-node-trees';
+import { DbtServiceImpl } from '../../lib/service/project';
+
+import type { DbtService } from '../../lib/service/types';
 
 type TestCase = {
 	name: string;
-	createService: () => ReturnType<typeof createProjectService>;
+	createService: () => Promise<DbtService>;
 };
 
-describe('loadProject (integration)', () => {
+describe('buildProject (integration)', () => {
 	const cases: TestCase[] = [
 		{
 			name: 'basic dbt fixture',
-			createService: () => {
+			createService: async () => {
 				const manifestPath = path.resolve(
 					process.cwd(),
-					'__e2e__/fixtures/basics/dbt-artifacts/manifest.json'
+					'__e2e__/fixtures/basics/src/content/dbt/default/manifest.json'
 				);
 				const catalogPath = path.resolve(
 					process.cwd(),
-					'__e2e__/fixtures/basics/dbt-artifacts/catalog.json'
+					'__e2e__/fixtures/basics/src/content/dbt/default/catalog.json'
 				);
+				const artifacts = await fetchArtifacts({
+					type: 'file',
+					manifest: manifestPath,
+					catalog: catalogPath,
+				});
 
-				return createProjectService(manifestPath, catalogPath);
+				return new DbtServiceImpl(artifacts.manifest, artifacts.catalog);
 			},
 		},
 		{
 			name: 'real dbt artifacts (jaffle shop)',
-			createService: () => {
+			createService: async () => {
 				const manifestPath = path.resolve(
 					process.cwd(),
-					'../../examples/jaffle-shop/dbt-artifacts/manifest.json'
+					'../../examples/jaffle-shop/src/content/dbt/jaffle_shop/manifest.json'
 				);
 				const catalogPath = path.resolve(
 					process.cwd(),
-					'../../examples/jaffle-shop/dbt-artifacts/catalog.json'
+					'../../examples/jaffle-shop/src/content/dbt/jaffle_shop/catalog.json'
 				);
+				const artifacts = await fetchArtifacts({
+					type: 'file',
+					manifest: manifestPath,
+					catalog: catalogPath,
+				});
 
-				return createProjectService(manifestPath, catalogPath);
+				return new DbtServiceImpl(artifacts.manifest, artifacts.catalog);
 			},
 		},
 	];
 
 	describe.each(cases)('$name', ({ createService }) => {
 		it('loads manifest and catalog', async () => {
-			const service = createService();
+			const service = await createService();
 			await service.init();
+			service.build();
 
 			expect(service.loaded).toBe(true);
 			expect(service.project).toBeDefined();
 		});
 
 		it('populates project nodes and macros', async () => {
-			const service = createService();
+			const service = await createService();
 			await service.init();
+			service.build();
 
 			expect(Object.keys(service.project.nodes).length).toBeGreaterThan(0);
 			expect(Object.keys(service.project.macros).length).toBeGreaterThanOrEqual(0);
 		});
 
 		it('builds all model trees', async () => {
-			const service = createService();
+			const service = await createService();
 			await service.init();
+			service.build();
 
 			expect(service.tree.project.length).toBeGreaterThan(0);
 			expect(service.tree.database.length).toBeGreaterThan(0);
@@ -71,8 +87,9 @@ describe('loadProject (integration)', () => {
 		});
 
 		it('excludes private and hidden models from trees', async () => {
-			const service = createService();
+			const service = await createService();
 			await service.init();
+			service.build();
 
 			const allItems = JSON.stringify(service.tree.groups);
 
@@ -81,8 +98,9 @@ describe('loadProject (integration)', () => {
 		});
 
 		it('marks protected models in display name', async () => {
-			const service = createService();
+			const service = await createService();
 			await service.init();
+			service.build();
 
 			const serialized = JSON.stringify(service.tree.groups);
 
@@ -93,8 +111,9 @@ describe('loadProject (integration)', () => {
 		});
 
 		it('groups models by group property', async () => {
-			const service = createService();
+			const service = await createService();
 			await service.init();
+			service.build();
 
 			const groups = service.tree.groups.filter(isFolder);
 			expect(groups.length).toBeGreaterThan(0);
@@ -105,8 +124,9 @@ describe('loadProject (integration)', () => {
 		});
 
 		it('builds database tree with schemas', async () => {
-			const service = createService();
+			const service = await createService();
 			await service.init();
+			service.build();
 
 			const dbTree = service.tree.database.filter(isFolder);
 			expect(dbTree.length).toBeGreaterThan(0);
@@ -116,8 +136,9 @@ describe('loadProject (integration)', () => {
 		});
 
 		it('builds source, exposure, metric, and semantic model trees', async () => {
-			const service = createService();
+			const service = await createService();
 			await service.init();
+			service.build();
 
 			expect(service.tree.sources.length).toBeGreaterThanOrEqual(0);
 			expect(service.tree.exposures.length).toBeGreaterThanOrEqual(0);
@@ -126,8 +147,9 @@ describe('loadProject (integration)', () => {
 		});
 
 		it('does not throw when optional sections are empty', async () => {
-			const service = createService();
+			const service = await createService();
 			await expect(service.init()).resolves.not.toThrow();
+			service.build();
 		});
 	});
 });
