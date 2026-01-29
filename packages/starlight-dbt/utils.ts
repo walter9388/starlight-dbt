@@ -5,12 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { dbtRootIdentifierPrefix } from './constants';
 
 import type { StarlightDbtOptions } from './config';
-import type { ProjectNode, TreeItem, MacroValues, DbtService } from './lib/service/types';
-import type { HookParameters } from '@astrojs/starlight/types';
 import type { AstroConfig } from 'astro';
-
-export type StarlightUserConfig = HookParameters<'config:setup'>['config'];
-type SidebarItem = NonNullable<StarlightUserConfig['sidebar']>[number];
 
 export const getPageTemplatePath = (config: StarlightDbtOptions): string => {
 	const dbtPageTemplateName = 'DbtPageTemplate.astro';
@@ -37,52 +32,6 @@ export const getDbtArtifactsAbsolutePath = (filepath: string, astroConfig: Astro
 	return path.resolve(fileURLToPath(astroConfig.root), filepath);
 };
 
-export const getDbtSidebar = (
-	currentSidebar: SidebarItem[],
-	service: DbtService,
-	baseUrl: string,
-	dbtProjectName: string
-): SidebarItem[] => {
-	const fullBaseUrl = `${baseUrl}/${dbtProjectName}`;
-	const dbtDatabaseSidebar = extractNestedSidebar(service.tree.database, fullBaseUrl, 'database');
-	const dbtProjectSidebar = extractNestedSidebar(service.tree.project, fullBaseUrl, 'project');
-	const dbtGroupsSidebar = extractNestedSidebar(service.tree.groups, fullBaseUrl, 'group');
-	currentSidebar.push({
-		label: dbtRootIdentifierPrefix + dbtProjectName,
-		items: [...dbtDatabaseSidebar, ...dbtProjectSidebar, ...dbtGroupsSidebar],
-		collapsed: true,
-	});
-	return currentSidebar;
-};
-
-function extractNestedSidebar(
-	tree: TreeItem<ProjectNode | MacroValues>[],
-	baseUrl: string,
-	dbtTreeDataIdentifer: 'project' | 'database' | 'group'
-): SidebarItem[] {
-	// Normalize the base URL (ensure leading slash, remove trailing slash)
-	const normalizedBase = baseUrl.startsWith('/') ? baseUrl : `/${baseUrl}`;
-	const cleanBase = normalizedBase.endsWith('/') ? normalizedBase.slice(0, -1) : normalizedBase;
-
-	return tree.map((item) => {
-		if ('items' in item) {
-			return {
-				label: item.name,
-				items: extractNestedSidebar(item.items, baseUrl, dbtTreeDataIdentifer),
-				collapsed: true,
-			};
-		}
-
-		return {
-			label: item.name,
-			link: `${cleanBase}/${item.unique_id}`,
-			attrs: {
-				'data-dbt-type': dbtTreeDataIdentifer,
-				class: 'dbt-item',
-			},
-		};
-	});
-}
 
 // TODO: Improve typing here with Astro SidebarEntry type
 interface _SidebarEntry {
