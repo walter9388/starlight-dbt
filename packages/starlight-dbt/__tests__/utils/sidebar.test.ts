@@ -1,12 +1,14 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as fsPromises from 'node:fs/promises';
 import path from 'node:path';
+
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { dbtRootIdentifierPrefix } from '../../constants';
 import * as manager from '../../lib/manager';
 import { getDbtSidebar, resolveDbtSidebar } from '../../lib/utils/sidebar';
-import type { DbtService } from '../../lib/service/types';
+
 import type { StarlightDbtOptions } from '../../config';
+import type { DbtService } from '../../lib/service/types';
 
 // Mock the external modules
 vi.mock('node:fs/promises');
@@ -50,7 +52,7 @@ describe('sidebar utils', () => {
 			} as any;
 			// Test with trailing slash in baseUrl
 			const sidebar = getDbtSidebar(mockService, 'dbt/proj/', 'P');
-			const item = (sidebar as any).items[0] as any;
+			const item = (sidebar as any).items[0];
 			expect(item.link).toBe('/dbt/proj/id');
 		});
 	});

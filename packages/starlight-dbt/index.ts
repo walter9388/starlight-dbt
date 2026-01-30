@@ -1,10 +1,10 @@
 import { AstroError } from 'astro/errors';
 
 import { StarlightDbtOptionsSchema, type StarlightDbtUserOptions } from './config';
+import { resolveDbtSidebar } from './lib/utils/sidebar';
 import { getPageTemplatePath } from './utils';
 
 import type { StarlightPlugin } from '@astrojs/starlight/types';
-import { resolveDbtSidebar } from './lib/utils/sidebar';
 
 export type { StarlightDbtOptions } from './config';
 

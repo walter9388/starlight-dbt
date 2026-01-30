@@ -101,6 +101,14 @@ async function genSidebarFromDir(
 		catalog: catalogPath,
 	});
 
+	/*
+	 * Add this slug to the internal project list for the loader.
+	 * We check if it already exists to prevent duplicates during re-runs.
+	 */
+	if (!config._projects.includes(item.slug)) {
+		config._projects.push(item.slug);
+	}
+
 	const dbtProjectSlug = path.join(config.baseUrl, item.slug);
 	const dbtProjectPath = path.join(config.baseDir, item.slug);
 	const dbtProjectLabel = item.label || item.slug;

@@ -68,16 +68,26 @@ const DbtSidebarItemSchema = z.union([
 	DbtManualGroupSchema,
 ]);
 
-export const StarlightDbtOptionsSchema = z.object({
-	/** Directory for dbt artifacts (default: 'src/content/dbt') */
-	baseDir: z.string().default('src/content/dbt'),
-	/** Base URL path for dbt docs (default: 'dbt') */
-	baseUrl: z.string().default('dbt'),
-	/** The sidebar configuration with dbt support. */
-	sidebar: DbtSidebarItemSchema.array().default([]),
-	/** Path to a custom template for dbt pages */
-	template: z.string().optional(),
-});
+export const StarlightDbtOptionsSchema = z
+	.object({
+		/** Directory for dbt artifacts (default: 'src/content/dbt') */
+		baseDir: z.string().default('src/content/dbt'),
+		/** Base URL path for dbt docs (default: 'dbt') */
+		baseUrl: z.string().default('dbt'),
+		/** The sidebar configuration with dbt support. */
+		sidebar: DbtSidebarItemSchema.array().default([]),
+		/** Path to a custom template for dbt pages */
+		template: z.string().optional(),
+	})
+	.transform((data) => ({
+		...data,
+		/**
+		 * @internal
+		 * A list of discovered dbt project slugs.
+		 * Populated during sidebar resolution.
+		 */
+		_projects: [] as string[],
+	}));
 
 export type StarlightDbtUserOptions = z.input<typeof StarlightDbtOptionsSchema>;
 export type StarlightDbtOptions = z.output<typeof StarlightDbtOptionsSchema>;

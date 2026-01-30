@@ -32,7 +32,6 @@ export const getDbtArtifactsAbsolutePath = (filepath: string, astroConfig: Astro
 	return path.resolve(fileURLToPath(astroConfig.root), filepath);
 };
 
-
 // TODO: Improve typing here with Astro SidebarEntry type
 interface _SidebarEntry {
 	label?: string;
