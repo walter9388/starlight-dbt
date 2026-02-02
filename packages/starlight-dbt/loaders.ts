@@ -10,7 +10,11 @@ export function dbtLoader(): Loader {
 	return {
 		name: 'dbt-loader',
 		load: async ({ store, logger, parseData, config: astroConfig }) => {
-			logger.info(`Scanning for dbt projects in ${starlightDbtConfig.baseDir}`);
+			if (starlightDbtConfig._projects.length === 0) {
+				logger.warn('No dbt projects found to load.');
+				return;
+			}
+
 			starlightDbtConfig._projects.map(async (projectSlug) => {
 				const projectPath = path.join(
 					astroConfig.root.pathname,
@@ -30,14 +34,14 @@ export function dbtLoader(): Loader {
 				// Map existing node_map to the Astro Store
 				for (const [uniqueId, node] of Object.entries(service.node_map)) {
 					const pageSlug = `${starlightDbtConfig.baseUrl}/${projectSlug}/${uniqueId}`;
-					const data = await parseData({
+					// Validate and transform the raw node
+					const validatedData = await parseData({
 						id: pageSlug,
-						data: {
-							...node,
-							_projectName: projectSlug,
-						},
+						data: { ...node, _projectName: projectSlug },
 					});
-					store.set({ id: projectSlug, data });
+
+					// Commit it to the store
+					store.set({ id: pageSlug, data: validatedData });
 				}
 			});
 
