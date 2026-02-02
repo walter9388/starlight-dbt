@@ -3,11 +3,11 @@ import path from 'node:path';
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+import { StarlightDbtOptionsSchema } from '../../config';
 import { dbtRootIdentifierPrefix } from '../../constants';
 import * as manager from '../../lib/manager';
 import { getDbtSidebar, resolveDbtSidebar } from '../../lib/utils/sidebar';
 
-import type { StarlightDbtOptions } from '../../config';
 import type { DbtService } from '../../lib/service/types';
 
 // Mock the external modules
@@ -19,7 +19,10 @@ describe('sidebar utils', () => {
 	const mockBaseUrl = '/dbt';
 	const mockRoot = '/root/';
 
-	const config = { baseDir: mockBaseDir, baseUrl: mockBaseUrl } as StarlightDbtOptions;
+	const config = StarlightDbtOptionsSchema.safeParse({
+		baseDir: mockBaseDir,
+		baseUrl: mockBaseUrl,
+	}).data!;
 	const astroConfig = { root: { pathname: mockRoot } } as any;
 
 	beforeEach(() => {

@@ -15,9 +15,13 @@ export default defineConfig({
 			],
 			plugins: [
 				dbtPlugin({
-					manifest: 'src/content/dbt/default/manifest.json',
-					catalog: 'src/content/dbt/default/catalog.json',
-					project: 'default',
+					sidebar: [
+						{
+							label: 'Default dbt Project',
+							slug: 'default',
+							dbt: true,
+						},
+					],
 				}),
 			],
 		}),

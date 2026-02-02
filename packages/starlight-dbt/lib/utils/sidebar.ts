@@ -135,8 +135,6 @@ async function exists(p: string) {
 	}
 }
 
-const MAX_DEPTH = 10;
-
 /**
  * Recursively scan a directory for dbt projects and categories.
  *
@@ -157,7 +155,8 @@ async function scanDbtDirectory(
 	relativeBase: string,
 	config: StarlightDbtOptions,
 	logger?: AstroIntegrationLogger,
-	depth = 0
+	depth = 0,
+	MAX_DEPTH = 10
 ): Promise<SidebarItem[]> {
 	if (depth > MAX_DEPTH) {
 		logger?.warn(`Max depth reached at ${fullPath}. Stopping scan.`);
