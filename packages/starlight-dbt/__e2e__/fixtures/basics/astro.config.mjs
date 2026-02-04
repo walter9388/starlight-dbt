@@ -10,14 +10,30 @@ export default defineConfig({
 			sidebar: [
 				{
 					label: 'Examples',
-					autogenerate: { directory: 'examples' },
+					autogenerate: {
+						directory: 'examples',
+						attrs: { style: 'font-style: italic; background-color: orange' },
+					},
+					badge: 'new',
 				},
 			],
 			plugins: [
 				dbtPlugin({
-					manifest: 'src/content/dbt/default/manifest.json',
-					catalog: 'src/content/dbt/default/catalog.json',
-					project: 'default',
+					sidebar: [
+						{
+							label: 'Default dbt Project',
+							slug: 'default',
+							dbt: true,
+						},
+						{
+							label: 'Examples',
+							autogenerate: {
+								directory: 'examples',
+								attrs: { style: 'font-style: italic; background-color: orange' },
+							},
+							badge: 'new',
+						},
+					],
 				}),
 			],
 		}),

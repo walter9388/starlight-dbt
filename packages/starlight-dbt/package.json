@@ -29,7 +29,8 @@
     "loaders.ts",
     "virtual.d.ts",
     "components",
-    "lib"
+    "lib",
+    "starlight-internals"
   ],
   "exports": {
     ".": "./index.ts",

@@ -13,8 +13,11 @@ Beautiful, customisable, high-performance dbt docs using Starlight (Astro)
   - [ ] Make it work over different dbt projects
   - [ ] update Icons
   - [ ] Test all the above
-- [ ] Refactor to use content layer
-  - [ ] Move file loading to manager, and away from the json parsing
+- [x] Refactor to use content layer
+  - [x] Move file loading to manager, and away from the json parsing
+  - [x] Make basic config work
+  - [x] Make shared config tell loader which projects exist in sidebar to load from cache
+  - [x] Make sure all other things pass through (e.g. badges, attrs, etc.) in config
 - [ ] Add multiple dbt projects / packages?
 - [ ] Improve internal typing
   - [ ] zod
@@ -25,8 +28,9 @@ Beautiful, customisable, high-performance dbt docs using Starlight (Astro)
 - [ ] improve test coverage on lib (unit testing)
 - [ ] sort out cicd (formatting, linting, testing)
 - [ ] sort out older versions of dbt manifest
-- [ ] Add option to markdown config for it to be before or after dbt component.
 - [ ] S3 content population
+- [ ] Add option to markdown config for it to be before or after dbt component.
+- [ ] Add Markdown file generation inside dbt projects, as well as overrides / pretext
 - [ ] Versioning (sidebar vs entire page)?
 - [ ] Search
 - [ ] Graph

@@ -1,8 +1,8 @@
 import { AstroError } from 'astro/errors';
 
 import { StarlightDbtOptionsSchema, type StarlightDbtUserOptions } from './config';
-import { getOrInitDbtService } from './lib/manager';
-import { getDbtArtifactsAbsolutePath, getPageTemplatePath, getDbtSidebar } from './utils';
+import { resolveDbtSidebar } from './lib/utils/sidebar';
+import { getPageTemplatePath } from './utils';
 
 import type { StarlightPlugin } from '@astrojs/starlight/types';
 
@@ -27,22 +27,15 @@ export default function starlightDbtPlugin(userOptions?: StarlightDbtUserOptions
 				astroConfig,
 				logger,
 			}) {
-				logger.info(`Using manifest: ${config.manifest}`);
-				logger.info(`Using catalog: ${config.catalog}`);
-				const service = await getOrInitDbtService('default', {
-					type: 'file',
-					manifest: getDbtArtifactsAbsolutePath(config.manifest, astroConfig),
-					catalog: getDbtArtifactsAbsolutePath(config.catalog, astroConfig),
-				});
-
 				try {
+					const resolvedDbtSidebar = await resolveDbtSidebar(
+						config.sidebar,
+						config,
+						astroConfig,
+						logger
+					);
 					updateConfig({
-						sidebar: getDbtSidebar(
-							starlightConfig.sidebar ?? [],
-							service,
-							config.baseUrl,
-							config.project
-						),
+						sidebar: [...(starlightConfig.sidebar ?? []), ...resolvedDbtSidebar],
 						components: {
 							...starlightConfig.components,
 							Sidebar: 'starlight-dbt/components/DbtSidebar.astro',

@@ -1,7 +1,6 @@
-import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { config } from 'virtual:starlight-dbt/config';
+import { config as starlightDbtConfig } from 'virtual:starlight-dbt/config';
 
 import { getOrInitDbtService } from './lib/manager';
 
@@ -10,26 +9,23 @@ import type { Loader } from 'astro/loaders';
 export function dbtLoader(): Loader {
 	return {
 		name: 'dbt-loader',
-		load: async ({ store, logger, parseData }) => {
-			logger.info(`Scanning for dbt projects in ${config.baseDir}`);
-
-			// Find all project directories
-			let projectDirs: string[] = [];
-			try {
-				const entries = await fs.readdir(config.baseDir, { withFileTypes: true });
-				projectDirs = entries.filter((e) => e.isDirectory()).map((e) => e.name);
-			} catch (e) {
-				logger.warn(`Could not find dbt directory at ${config.baseDir}`);
+		load: async ({ store, logger, parseData, config: astroConfig }) => {
+			if (starlightDbtConfig._projects.length === 0) {
+				logger.warn('No dbt projects found to load.');
 				return;
 			}
 
-			for (const projectName of projectDirs) {
-				const projectPath = path.join(config.baseDir, projectName);
+			starlightDbtConfig._projects.map(async (projectSlug) => {
+				const projectPath = path.join(
+					astroConfig.root.pathname,
+					starlightDbtConfig.baseDir,
+					projectSlug
+				);
 				const manifestPath = path.join(projectPath, 'manifest.json');
 				const catalogPath = path.join(projectPath, 'catalog.json');
-				logger.info(`Loading dbt project '${projectName}'`);
+				logger.info(`Loading dbt project: ${projectSlug}`);
 
-				const service = await getOrInitDbtService(projectName, {
+				const service = await getOrInitDbtService(projectSlug, {
 					type: 'file',
 					manifest: manifestPath,
 					catalog: catalogPath,
@@ -37,19 +33,19 @@ export function dbtLoader(): Loader {
 
 				// Map existing node_map to the Astro Store
 				for (const [uniqueId, node] of Object.entries(service.node_map)) {
-					const slug = `${config.baseUrl}/${projectName}/${uniqueId}`;
-					const data = await parseData({
-						id: slug,
-						data: {
-							...node,
-							_projectName: projectName,
-						},
+					const pageSlug = `${starlightDbtConfig.baseUrl}/${projectSlug}/${uniqueId}`;
+					// Validate and transform the raw node
+					const validatedData = await parseData({
+						id: pageSlug,
+						data: { ...node, _projectName: projectSlug },
 					});
-					store.set({ id: slug, data });
-				}
-			}
 
-			logger.info(`Loaded dbt projects: ${projectDirs.join(', ')}`);
+					// Commit it to the store
+					store.set({ id: pageSlug, data: validatedData });
+				}
+			});
+
+			logger.info(`Loaded dbt projects: ${starlightDbtConfig._projects.join(', ')}`);
 		},
 	};
 }
