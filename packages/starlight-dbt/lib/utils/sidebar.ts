@@ -5,6 +5,7 @@ import { dbtRootIdentifierPrefix } from '../../constants';
 import { getOrInitDbtService } from '../manager';
 
 import type { DbtSidebarItem, StarlightDbtOptions } from '../../config';
+import type { LinkHTMLAttributes } from '../../starlight-internals/schemas/sidebar';
 import type { ProjectNode, TreeItem, MacroValues, DbtService } from '../service/types';
 import type { HookParameters } from '@astrojs/starlight/types';
 import type { AstroConfig, AstroIntegrationLogger } from 'astro';
@@ -22,12 +23,18 @@ type SidebarItem = NonNullable<StarlightUserConfig['sidebar']>[number];
  * @param service - Initialized dbt service containing tree data
  * @param baseUrl - Base URL (slug) for links to dbt nodes
  * @param label - Human-readable label for the project
+ * @param attrs - Html attributes defined in sidebar
  * @returns SidebarItem containing nested dbt items
  */
-export const getDbtSidebar = (service: DbtService, baseUrl: string, label: string): SidebarItem => {
-	const dbtDatabaseSidebar = extractNestedSidebar(service.tree.database, baseUrl, 'database');
-	const dbtProjectSidebar = extractNestedSidebar(service.tree.project, baseUrl, 'project');
-	const dbtGroupsSidebar = extractNestedSidebar(service.tree.groups, baseUrl, 'group');
+export const getDbtSidebar = (
+	service: DbtService,
+	baseUrl: string,
+	label: string,
+	attrs: LinkHTMLAttributes
+): SidebarItem => {
+	const dbtDatabaseSidebar = extractSidebar(service.tree.database, baseUrl, 'database', attrs);
+	const dbtProjectSidebar = extractSidebar(service.tree.project, baseUrl, 'project', attrs);
+	const dbtGroupsSidebar = extractSidebar(service.tree.groups, baseUrl, 'group', attrs);
 	return {
 		label: dbtRootIdentifierPrefix + label,
 		items: [...dbtDatabaseSidebar, ...dbtProjectSidebar, ...dbtGroupsSidebar],
@@ -45,12 +52,14 @@ export const getDbtSidebar = (service: DbtService, baseUrl: string, label: strin
  * @param tree - Tree of project nodes or macros
  * @param baseUrl - Base path used to build item links
  * @param dbtTreeDataIdentifer - Identifier for data-dbt-type attribute
+ * @param attrs - Html attributes defined in sidebar (optional)
  * @returns Array of SidebarItem entries
  */
-function extractNestedSidebar(
+function extractSidebar(
 	tree: TreeItem<ProjectNode | MacroValues>[],
 	baseUrl: string,
-	dbtTreeDataIdentifer: 'project' | 'database' | 'group'
+	dbtTreeDataIdentifer: 'project' | 'database' | 'group',
+	attrs?: LinkHTMLAttributes
 ): SidebarItem[] {
 	const normalizedBase = baseUrl.startsWith('/') ? baseUrl : `/${baseUrl}`;
 	const cleanBase = normalizedBase.endsWith('/') ? normalizedBase.slice(0, -1) : normalizedBase;
@@ -59,7 +68,7 @@ function extractNestedSidebar(
 		if ('items' in item) {
 			return {
 				label: item.name,
-				items: extractNestedSidebar(item.items, baseUrl, dbtTreeDataIdentifer),
+				items: extractSidebar(item.items, baseUrl, dbtTreeDataIdentifer, attrs),
 				collapsed: true,
 			};
 		}
@@ -69,7 +78,8 @@ function extractNestedSidebar(
 			link: `${cleanBase}/${item.unique_id}`,
 			attrs: {
 				'data-dbt-type': dbtTreeDataIdentifer,
-				class: 'dbt-item',
+				class: attrs?.class ? attrs.class + ' ' : '' + 'dbt-item',
+				...attrs,
 			},
 		};
 	});
@@ -81,7 +91,7 @@ function extractNestedSidebar(
  * Initializes or retrieves a cached dbt service for the provided manifest
  * and returns the sidebar entry produced by `getDbtSidebar`.
  *
- * @param item - Item descriptor containing the project `slug` and optional `label`
+ * @param item - Dbt sidebar item
  * @param manifestPath - Path to the project's `manifest.json`
  * @param catalogPath - Path to the project's `catalog.json`
  * @param config - Starlight dbt options
@@ -89,7 +99,7 @@ function extractNestedSidebar(
  * @returns SidebarItem for the dbt project
  */
 async function genSidebarFromDir(
-	item: Extract<DbtSidebarItem, { dbt: boolean }> | { slug: string; label?: string },
+	item: Extract<DbtSidebarItem, { dbt: boolean }>,
 	manifestPath: string,
 	catalogPath: string,
 	config: StarlightDbtOptions,
@@ -117,7 +127,7 @@ async function genSidebarFromDir(
 		`Generating sidebar for dbt project: ${dbtProjectLabel} ` +
 			`(path: ${dbtProjectPath} -> slug: ${dbtProjectSlug}) `
 	);
-	return getDbtSidebar(service, dbtProjectSlug, dbtProjectLabel);
+	return getDbtSidebar(service, dbtProjectSlug, dbtProjectLabel, item.attrs);
 }
 
 /**
@@ -145,6 +155,7 @@ async function exists(p: string) {
  *
  * @param fullPath - Absolute filesystem path to scan
  * @param relativeBase - Base path used to build project slugs
+ * @param attrs - Html attributes defined in sidebar
  * @param config - Starlight dbt options (baseUrl/baseDir)
  * @param logger - Optional integration logger for warnings/errors
  * @param depth - Used to prevent excessive recursion depth
@@ -153,6 +164,7 @@ async function exists(p: string) {
 async function scanDbtDirectory(
 	fullPath: string,
 	relativeBase: string,
+	attrs: LinkHTMLAttributes,
 	config: StarlightDbtOptions,
 	logger?: AstroIntegrationLogger,
 	depth = 0,
@@ -179,7 +191,7 @@ async function scanDbtDirectory(
 		if (await exists(manifestPath)) {
 			items.push(
 				await genSidebarFromDir(
-					{ slug, label: entry.name },
+					{ slug, label: entry.name, attrs, dbt: true, translations: {} },
 					manifestPath,
 					path.join(projectPath, 'catalog.json'),
 					config,
@@ -187,7 +199,7 @@ async function scanDbtDirectory(
 				)
 			);
 		} else {
-			const subItems = await scanDbtDirectory(projectPath, slug, config, logger, depth + 1);
+			const subItems = await scanDbtDirectory(projectPath, slug, attrs, config, logger, depth + 1);
 			if (subItems.length > 0) {
 				items.push({ label: entry.name, items: subItems, collapsed: true });
 			}
@@ -233,6 +245,7 @@ export async function resolveDbtSidebar(
 
 			if ('autogenerate' in item && 'dbt' in item.autogenerate) {
 				const directory = item.autogenerate.directory;
+				const attrs = item.autogenerate.attrs;
 				const fullPath = path.join(astroConfig.root.pathname, config.baseDir, directory);
 
 				if (!(await exists(fullPath))) {
@@ -242,7 +255,7 @@ export async function resolveDbtSidebar(
 					);
 				}
 
-				const generatedItems = await scanDbtDirectory(fullPath, directory, config, logger);
+				const generatedItems = await scanDbtDirectory(fullPath, directory, attrs, config, logger);
 
 				if (generatedItems.length === 0) {
 					logger?.warn(`No dbt projects (manifest.json files) found recursively in: ${fullPath}`);

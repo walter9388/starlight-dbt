@@ -16,8 +16,8 @@ Beautiful, customisable, high-performance dbt docs using Starlight (Astro)
 - [x] Refactor to use content layer
   - [x] Move file loading to manager, and away from the json parsing
   - [x] Make basic config work
-  - [ ] Make shared config tell loader which projects exist in sidebar to load from cache
-  - [ ] Make sure all other things pass through (e.g. badges, attrs, etc.) in config
+  - [x] Make shared config tell loader which projects exist in sidebar to load from cache
+  - [x] Make sure all other things pass through (e.g. badges, attrs, etc.) in config
 - [ ] Add multiple dbt projects / packages?
 - [ ] Improve internal typing
   - [ ] zod
