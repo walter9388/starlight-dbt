@@ -104,17 +104,23 @@ type DevServer = Awaited<ReturnType<typeof dev>>;
 type Server = PreviewServer | DevServer;
 
 /**
- * Helper to recursively expand ALL folders inside the dbt section.
+ * Helper to recursively expand ALL folders inside all dbt sections.
  * This ensures nested links are considered "visible" by Playwright.
  */
 export const expandAllDbtFolders = async (page: Page) => {
-	const dbtRoot = page.locator('li.dbt-root-node');
-	await dbtRoot.evaluate((node) => {
-		const details = node.querySelectorAll('details');
-		details.forEach((d) => (d.open = true));
-	});
-	// Wait a moment for Starlight's animations or layout to settle
-	await expect(dbtRoot.locator('.dbt-switcher')).toBeVisible();
+    const dbtRoots = page.locator('li.dbt-root-node');
+
+    // Use evaluateAll to iterate over every dbt root found on the page
+    await dbtRoots.evaluateAll((nodes) => {
+        nodes.forEach((node) => {
+            const details = node.querySelectorAll('details');
+            details.forEach((d) => (d.open = true));
+        });
+    });
+
+    // Verify at least the first one is ready. 
+    // We use .first() to avoid the same strict mode error here.
+    await expect(dbtRoots.first().locator('.dbt-switcher')).toBeVisible();
 };
 
 /**

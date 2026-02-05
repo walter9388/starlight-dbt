@@ -1,0 +1,90 @@
+{
+  "metadata": {
+    "dbt_schema_version": "https://schemas.getdbt.com/dbt/catalog/v1.json"
+  },
+  "sources": {
+    "source1": {
+      "metadata": {
+        "type": "BASE TABLE",
+        "schema": "public",
+        "name": "source1"
+      },
+      "columns": {
+        "field_1": {
+          "type": "TEXT",
+          "index": 1,
+          "name": "field_1"
+        }
+      },
+      "stats": {},
+      "unique_id": "source.test_pkg.s1.source1"
+    },
+    "source2": {
+      "metadata": {
+        "type": "BASE TABLE",
+        "schema": "raw",
+        "name": "source2"
+      },
+      "columns": {
+        "field_a": {
+          "type": "TEXT",
+          "index": 1,
+          "name": "field_a"
+        }
+      },
+      "stats": {},
+      "unique_id": "source.test_pkg.s2.source2"
+    }
+  },
+  "nodes": {
+    "model_node": {
+      "metadata": {
+        "type": "BASE TABLE",
+        "schema": "stg",
+        "name": "model_node"
+      },
+      "columns": {
+        "ID": {
+          "type": "TEXT",
+          "index": 1,
+          "name": "ID"
+        },
+        "name": {
+          "type": "TEXT",
+          "index": 2,
+          "name": "name"
+        },
+        "mixedCase": {
+          "type": "TEXT",
+          "index": 3,
+          "name": "mixedCase"
+        }
+      },
+      "stats": {}
+    },
+    "snapshot_node": {
+      "metadata": {
+        "type": "BASE TABLE",
+        "schema": "snap",
+        "name": "snapshot_node"
+      },
+      "columns": {},
+      "stats": {}
+    },
+    "seed_node": {
+      "metadata": {
+        "type": "BASE TABLE",
+        "schema": "raw",
+        "name": "seed_node"
+      },
+      "columns": {
+        "seed_col": {
+          "type": "TEXT",
+          "index": 1,
+          "name": "seed_col"
+        }
+      },
+      "stats": {}
+    }
+  }
+}

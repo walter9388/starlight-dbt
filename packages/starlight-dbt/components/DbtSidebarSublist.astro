@@ -4,7 +4,7 @@
 
 import { Badge, Icon } from '@astrojs/starlight/components';
 import SidebarRestorePoint from '../starlight-internals/components/SidebarRestorePoint.astro';
-import { getSidebarEntryMeta } from '../utils';
+import { getSidebarEntryMeta } from '../lib/utils/sidebar';
 import DbtSidebarRadioSwitcher from './DbtSidebarRadioSwitch.astro';
 
 // extract SidebarEntry and SidebarLink types from Astro.locals.starlightRoute.sidebar
@@ -38,7 +38,7 @@ const isCurrentPage = (href: string) => {
 	{
 		sublist.map((entry) => {
 			// determine if this entry is a dbt root or contains dbt types
-			const { isRoot, cleanLabel, types } = getSidebarEntryMeta(entry);
+			const { isRoot, cleanLabel, projectSlug, types } = getSidebarEntryMeta(entry);
 			const containerClasses = types.map((t) => `contains-${t}`).join(' ');
 
 			// Things added to the internal SidebarSublist component:
@@ -84,7 +84,7 @@ const isCurrentPage = (href: string) => {
 
 							{
 								// dbt radio switcher component at under dbt-root-node
-								isRoot && <DbtSidebarRadioSwitcher />
+								isRoot && <DbtSidebarRadioSwitcher projectId={projectSlug} />
 							}
 
 							<SidebarRestorePoint />
@@ -101,48 +101,55 @@ const isCurrentPage = (href: string) => {
 	/** * DBT SIDEBAR FILTERING LOGIC
      * ---------------------------
      * HOW IT WORKS:
-     * 1. Discovery: The JS frontmatter scans the sidebar tree and adds 'contains-{type}' 
-     * classes to parent folders based on their children's data-dbt-type attributes.
-     * 2. State Control: A radio button group (DbtSidebarRadioSwitch component) acts as the controller.
-     * 3. Filtering: We use the CSS :has() relational selector on the root node. 
-     * 4. Visibility: When a radio button is :checked, we 're-enable' matching branches/links.
+     * 1. Discovery: The sidebar tree is scanned; 'contains-{type}' classes are added 
+     * to parent folders based on their children's 'data-dbt-type' attributes.
+     * 2. Independent State: Each dbt project has its own DbtSidebarRadioSwitch.
+     * 3. Scoped Filtering: We use the CSS :has() selector on the .dbt-root-node. 
+     * This ensures that clicking 'Database' in Project A does NOT affect Project B.
+     * 4. Visibility: When a radio is :checked, we 're-enable' matching branches.
      *
      * NOTE ON CASCADE LAYERS:
-     * These rules are intentionally kept UNLAYERED. In CSS, unlayered styles have 
-     * higher priority than layered ones. This ensures our functional "display: none" 
-     * correctly overrides any theme defaults (like Starlight's a { display: block })
-     * without fighting specificity wars.
+     * These rules are unlayered. In CSS, unlayered styles have higher priority 
+     * than layered ones, ensuring our "display: none" overrides Starlight defaults.
      */
 
 	/* --- Global Hidden State --- */
-	/* Targets anything tagged with a 'contains-' class or a direct dbt-type attribute */
+	/* Target any li, details, or a-tag that belongs to dbt. 
+       We catch everything inside the root project by default. */
 	.dbt-root-node li[class*='contains-'],
 	.dbt-root-node details[class*='contains-'],
 	.dbt-root-node a[data-dbt-type] {
-		display: none;
+		display: none !important;
 	}
 
-	/* --- Conditional Visibility Rules --- */
+	/* Always keep the root project folder itself visible to keep the switcher accessible */
+	.dbt-root-node > details {
+		display: block !important;
+	}
+
+	/* --- Scoped Visibility Rules --- */
+	/* These rules only trigger if the radio button INSIDE this specific root node is checked. */
+
 	/* Project View */
-	.dbt-root-node:has(#v-project:checked) .contains-project,
-	.dbt-root-node:has(#v-project:checked) a[data-dbt-type='project'] {
-		display: block;
+	.dbt-root-node:has(input[value='project']:checked) .contains-project,
+	.dbt-root-node:has(input[value='project']:checked) a[data-dbt-type='project'] {
+		display: block !important;
 	}
 
 	/* Database View */
-	.dbt-root-node:has(#v-database:checked) .contains-database,
-	.dbt-root-node:has(#v-database:checked) a[data-dbt-type='database'] {
-		display: block;
+	.dbt-root-node:has(input[value='database']:checked) .contains-database,
+	.dbt-root-node:has(input[value='database']:checked) a[data-dbt-type='database'] {
+		display: block !important;
 	}
 
 	/* Group View */
-	.dbt-root-node:has(#v-group:checked) .contains-group,
-	.dbt-root-node:has(#v-group:checked) a[data-dbt-type='group'] {
-		display: block;
+	.dbt-root-node:has(input[value='group']:checked) .contains-group,
+	.dbt-root-node:has(input[value='group']:checked) a[data-dbt-type='group'] {
+		display: block !important;
 	}
 
-	/* Ensure summaries (folder headers) are always flex if their parent is visible.
-       !important is used here to ensure the summary behaves as a Starlight header. */
+	/* --- UI Refinements --- */
+	/* Ensure summaries (folder headers) behave as Starlight headers when visible */
 	.dbt-root-node summary {
 		display: flex !important;
 	}

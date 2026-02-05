@@ -1,17 +1,14 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { dbtRootIdentifierPrefix } from '../../constants';
+import { _SEP, dbtRootIdentifierPrefix } from '../../constants';
 import { getOrInitDbtService } from '../manager';
 
 import type { DbtSidebarItem, StarlightDbtOptions } from '../../config';
 import type { LinkHTMLAttributes } from '../../starlight-internals/schemas/sidebar';
 import type { ProjectNode, TreeItem, MacroValues, DbtService } from '../service/types';
-import type { HookParameters } from '@astrojs/starlight/types';
+import type { SidebarEntry, SidebarItem } from '../types';
 import type { AstroConfig, AstroIntegrationLogger } from 'astro';
-
-type StarlightUserConfig = HookParameters<'config:setup'>['config'];
-type SidebarItem = NonNullable<StarlightUserConfig['sidebar']>[number];
 
 /**
  * Build a SidebarItem representing a dbt project tree.
@@ -30,13 +27,13 @@ export const getDbtSidebar = (
 	service: DbtService,
 	baseUrl: string,
 	label: string,
-	attrs: LinkHTMLAttributes
+	attrs?: LinkHTMLAttributes
 ): SidebarItem => {
 	const dbtDatabaseSidebar = extractSidebar(service.tree.database, baseUrl, 'database', attrs);
 	const dbtProjectSidebar = extractSidebar(service.tree.project, baseUrl, 'project', attrs);
 	const dbtGroupsSidebar = extractSidebar(service.tree.groups, baseUrl, 'group', attrs);
 	return {
-		label: dbtRootIdentifierPrefix + label,
+		label: dbtRootIdentifierPrefix + baseUrl + _SEP + label,
 		items: [...dbtDatabaseSidebar, ...dbtProjectSidebar, ...dbtGroupsSidebar],
 		collapsed: true,
 	};
@@ -291,4 +288,82 @@ export async function resolveDbtSidebar(
 			return item;
 		})
 	);
+}
+
+/**
+ * Parse a sidebar entry label to determine dbt root metadata.
+ *
+ * A dbt root label is prefixed with `dbtRootIdentifierPrefix` and follows
+ * the format:
+ *
+ *   <prefix><projectSlug><_SEP><humanReadableLabel>
+ *
+ * @param label - Raw sidebar entry label
+ * @returns Object containing:
+ *   - `isRoot`: whether the label represents a dbt root
+ *   - `projectSlug`: extracted project slug if root, otherwise empty
+ *   - `cleanLabel`: human-readable label with dbt prefix removed if present
+ */
+function parseDbtRootLabel(label: string) {
+	const isRoot = label.startsWith(dbtRootIdentifierPrefix);
+
+	if (!isRoot) {
+		return {
+			isRoot: false,
+			projectSlug: '',
+			cleanLabel: label,
+		};
+	}
+
+	const [projectSlug = '', cleanLabel = label] = label
+		.replace(dbtRootIdentifierPrefix, '')
+		.split(_SEP);
+
+	return { isRoot: true, projectSlug, cleanLabel };
+}
+
+/**
+ * Traverse a sidebar entry tree and collect all discovered dbt types.
+ *
+ * Looks for `data-dbt-type` attributes on link entries so callers can
+ * target dbt sub-types via CSS.
+ *
+ * @param entry - Root sidebar entry to traverse
+ * @returns Array of unique dbt types found in the branch
+ */
+function collectDbtTypes(entry: SidebarEntry): string[] {
+	const types = new Set<string>();
+
+	const visit = (e: SidebarEntry) => {
+		if (e.type === 'link' && e.attrs?.['data-dbt-type']) {
+			types.add(e.attrs['data-dbt-type']);
+		} else if (e.type === 'group' && e.entries) {
+			e.entries.forEach(visit);
+		}
+	};
+
+	visit(entry);
+	return Array.from(types);
+}
+
+/**
+ * Extract metadata from a sidebar entry for dbt-specific handling.
+ *
+ * Determines whether the entry represents a dbt project root, extracts
+ * any associated project metadata from the label, and collects dbt
+ * sub-types present within the entry tree for styling or targeting.
+ *
+ * @param entry - Sidebar entry to inspect
+ * @returns Object containing:
+ *   - `isRoot`: whether the entry is a dbt root entry
+ *   - `cleanLabel`: human-readable label with dbt prefix removed if present
+ *   - `projectSlug`: project slug extracted from a dbt root label (or empty)
+ *   - `types`: array of discovered `data-dbt-type` values within the branch
+ */
+export function getSidebarEntryMeta(entry: SidebarEntry) {
+	const label = entry.label || '';
+	const { isRoot, projectSlug, cleanLabel } = parseDbtRootLabel(label);
+	const types = collectDbtTypes(entry);
+
+	return { isRoot, cleanLabel, projectSlug, types };
 }
