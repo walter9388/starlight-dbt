@@ -138,6 +138,9 @@ test.describe('Sidebar Functionality', () => {
 			// Note: If your "Ungrouped" items also have "project" tags,
 			// the folder correctly stays visible. We test that the switch works.
 			await page.locator('label[for^="v-database-"]').first().click();
+
+			// If the folder contains database items, it stays visible.
+			// This confirms the CSS logic is checking the classes correctly.
 			const hasDatabaseItems = await ungrouped.evaluate((el) =>
 				el.classList.contains('contains-database')
 			);
@@ -171,6 +174,23 @@ test.describe('Sidebar Functionality', () => {
 	});
 
 	test.describe('Sidebar Advanced Selection & Expansion', () => {
+		test('should highlight the current page in the default (Project) view', async ({
+			page,
+			getProdServer,
+		}) => {
+			const starlight = await getProdServer();
+			await starlight.goto(`${baseUrl}/model.test_pkg.model_node`);
+			await expandDbtRoot(page);
+
+			// Look for the active link specifically within the dbt root
+			// Use data-dbt-type="project" as project is the default radio state
+			const activeLink = page.locator(
+				'.dbt-root-node a[aria-current="page"][data-dbt-type="project"]'
+			);
+			await expect(activeLink.first()).toBeVisible();
+			await expect(activeLink.first()).toHaveText('model_node_v1');
+		});
+
 		test('should synchronize highlighting and auto-expand when switching views', async ({
 			page,
 			getProdServer,
