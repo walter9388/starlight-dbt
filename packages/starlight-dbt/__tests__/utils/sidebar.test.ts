@@ -4,15 +4,24 @@ import path from 'node:path';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { StarlightDbtOptionsSchema } from '../../config';
-import { dbtRootIdentifierPrefix } from '../../constants';
-import * as manager from '../../lib/manager';
-import { getDbtSidebar, resolveDbtSidebar } from '../../lib/utils/sidebar';
+import { _SEP, dbtRootIdentifierPrefix } from '../../constants';
+import { getOrInitDbtService } from '../../lib/manager';
+import { getDbtSidebar, getSidebarEntryMeta, resolveDbtSidebar } from '../../lib/utils/sidebar';
 
 import type { DbtService } from '../../lib/service/types';
+import type { SidebarEntry, SidebarGroup, SidebarLink } from '../../lib/types';
 
 // Mock the external modules
 vi.mock('node:fs/promises');
 vi.mock('../../lib/manager');
+
+/** Helper to mock fs.Dirent */
+function mockDir(name: string) {
+	return {
+		name,
+		isDirectory: () => true,
+	};
+}
 
 describe('sidebar utils', () => {
 	const mockBaseDir = 'src/content/dbt';
@@ -41,7 +50,9 @@ describe('sidebar utils', () => {
 
 			const sidebar = getDbtSidebar(mockService, '/dbt/project-a', 'Project A');
 
-			expect((sidebar as any).label).toBe(`${dbtRootIdentifierPrefix}Project A`);
+			expect((sidebar as any).label).toBe(
+				`${dbtRootIdentifierPrefix}/dbt/project-a${_SEP}Project A`
+			);
 			expect((sidebar as any).items).toHaveLength(3);
 			expect((sidebar as any).items[0]).toMatchObject({
 				label: 'DB Node',
@@ -95,7 +106,7 @@ describe('sidebar utils', () => {
 				return Promise.reject(new Error('path not found'));
 			});
 
-			vi.mocked(manager.getOrInitDbtService).mockResolvedValue({
+			vi.mocked(getOrInitDbtService).mockResolvedValue({
 				tree: { database: [], project: [], groups: [] },
 			} as any);
 
@@ -141,7 +152,7 @@ describe('sidebar utils', () => {
 			});
 
 			// Ensure the service initialization doesn't throw
-			vi.mocked(manager.getOrInitDbtService).mockResolvedValue({
+			vi.mocked(getOrInitDbtService).mockResolvedValue({
 				tree: { database: [], project: [], groups: [] },
 			} as any);
 
@@ -181,7 +192,7 @@ describe('sidebar utils', () => {
 				return [];
 			});
 
-			vi.mocked(manager.getOrInitDbtService).mockResolvedValue({
+			vi.mocked(getOrInitDbtService).mockResolvedValue({
 				tree: { database: [], project: [], groups: [] },
 			} as any);
 
@@ -256,7 +267,7 @@ describe('sidebar utils', () => {
 		it('should expand explicit dbt links if manifest exists', async () => {
 			const items = [{ label: 'Manual Proj', slug: 'my-proj', dbt: true }] as any;
 			vi.mocked(fsPromises.access).mockResolvedValue(); // Manifest exists
-			vi.mocked(manager.getOrInitDbtService).mockResolvedValue({
+			vi.mocked(getOrInitDbtService).mockResolvedValue({
 				tree: { database: [], project: [], groups: [] },
 			} as any);
 
@@ -276,12 +287,104 @@ describe('sidebar utils', () => {
 			expect((out[0]! as any).label).toBe('Broken');
 		});
 	});
-});
 
-/** Helper to mock fs.Dirent */
-function mockDir(name: string) {
-	return {
-		name,
-		isDirectory: () => true,
-	};
-}
+	describe('getSidebarEntryMeta', () => {
+		const createLink = (label: string, dbtType?: string): SidebarLink => ({
+			type: 'link',
+			label,
+			href: `/${label.toLowerCase()}`,
+			isCurrent: false,
+			badge: undefined,
+			attrs: dbtType ? { 'data-dbt-type': dbtType } : {},
+		});
+
+		const createGroup = (label: string, entries: SidebarEntry[] = []): SidebarGroup => ({
+			type: 'group',
+			label,
+			entries,
+			collapsed: false,
+			badge: undefined,
+		});
+
+		it('returns non-root metadata for a normal sidebar group', () => {
+			const entry = createGroup('Models');
+
+			const result = getSidebarEntryMeta(entry);
+
+			expect(result).toEqual({
+				isRoot: false,
+				projectSlug: '',
+				cleanLabel: 'Models',
+				types: [],
+			});
+		});
+
+		it('detects a dbt root and extracts projectSlug and cleanLabel', () => {
+			const entry = createGroup(`${dbtRootIdentifierPrefix}analytics${_SEP}Analytics`);
+
+			const result = getSidebarEntryMeta(entry);
+
+			expect(result.isRoot).toBe(true);
+			expect(result.projectSlug).toBe('analytics');
+			expect(result.cleanLabel).toBe('Analytics');
+			expect(result.types).toEqual([]);
+		});
+
+		it('handles dbt root labels missing a human-readable name', () => {
+			const entry = createGroup(`${dbtRootIdentifierPrefix}analytics`);
+
+			const result = getSidebarEntryMeta(entry);
+
+			expect(result.isRoot).toBe(true);
+			expect(result.projectSlug).toBe('analytics');
+			expect(result.cleanLabel).toBe(`${dbtRootIdentifierPrefix}analytics`);
+		});
+
+		it('collects dbt types from direct link children', () => {
+			const entry = createGroup('Root', [
+				createLink('Orders', 'model'),
+				createLink('Customers', 'model'),
+				createLink('Sources', 'source'),
+			]);
+
+			const result = getSidebarEntryMeta(entry);
+
+			expect(result.types.sort()).toEqual(['model', 'source']);
+		});
+
+		it('collects dbt types recursively from nested groups', () => {
+			const entry = createGroup('Root', [
+				createLink('Orders', 'model'),
+				createGroup('Seeds', [
+					createLink('Country Codes', 'seed'),
+					createGroup('Snapshots', [createLink('Orders Snapshot', 'snapshot')]),
+				]),
+			]);
+
+			const result = getSidebarEntryMeta(entry);
+
+			expect(result.types.sort()).toEqual(['model', 'seed', 'snapshot']);
+		});
+
+		it('ignores links without data-dbt-type attributes', () => {
+			const entry = createGroup('Root', [createLink('README'), createLink('Models', 'model')]);
+
+			const result = getSidebarEntryMeta(entry);
+
+			expect(result.types).toEqual(['model']);
+		});
+
+		it('handles an empty group safely', () => {
+			const entry = createGroup('Empty');
+
+			const result = getSidebarEntryMeta(entry);
+
+			expect(result).toEqual({
+				isRoot: false,
+				projectSlug: '',
+				cleanLabel: 'Empty',
+				types: [],
+			});
+		});
+	});
+});

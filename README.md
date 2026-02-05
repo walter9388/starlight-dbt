@@ -18,7 +18,7 @@ Beautiful, customisable, high-performance dbt docs using Starlight (Astro)
   - [x] Make basic config work
   - [x] Make shared config tell loader which projects exist in sidebar to load from cache
   - [x] Make sure all other things pass through (e.g. badges, attrs, etc.) in config
-- [ ] Add multiple dbt projects / packages?
+- [x] Add multiple dbt projects / packages?
 - [ ] Improve internal typing
   - [ ] zod
   - [ ] redefine a lot of the manifest/catalog schema types explicitly

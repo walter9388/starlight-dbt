@@ -1,3 +1,14 @@
+import type { StarlightRouteData } from '@astrojs/starlight/route-data';
+import type { HookParameters } from '@astrojs/starlight/types';
+
+type StarlightUserConfig = HookParameters<'config:setup'>['config'];
+export type SidebarItem = NonNullable<StarlightUserConfig['sidebar']>[number];
+
+type Sidebar = StarlightRouteData['sidebar'];
+export type SidebarEntry = Sidebar[number];
+export type SidebarLink = Extract<SidebarEntry, { type: 'link' }>;
+export type SidebarGroup = Extract<SidebarEntry, { type: 'group' }>;
+
 /**
  * Input accepted by artifact loaders.
  *
