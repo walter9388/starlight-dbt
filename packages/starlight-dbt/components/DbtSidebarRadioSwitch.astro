@@ -1,53 +1,60 @@
 ---
-
+interface Props {
+	projectId: string;
+}
+const { projectId } = Astro.props;
+const safeId = projectId.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+const storageKey = `dbt-view-pref-${safeId}`;
 ---
 
-<div class="dbt-switcher">
-	<input type="radio" name="dbt-view" id="v-project" value="project" checked />
-	<label for="v-project">Project</label>
+<div class="dbt-switcher" data-project-id={safeId}>
+	<input
+		type="radio"
+		name={`dbt-view-${safeId}`}
+		id={`v-project-${safeId}`}
+		value="project"
+		checked
+	/>
+	<label for={`v-project-${safeId}`}>Project</label>
 
-	<input type="radio" name="dbt-view" id="v-database" value="database" />
-	<label for="v-database">Database</label>
+	<input type="radio" name={`dbt-view-${safeId}`} id={`v-database-${safeId}`} value="database" />
+	<label for={`v-database-${safeId}`}>Database</label>
 
-	<input type="radio" name="dbt-view" id="v-group" value="group" />
-	<label for="v-group">Group</label>
+	<input type="radio" name={`dbt-view-${safeId}`} id={`v-group-${safeId}`} value="group" />
+	<label for={`v-group-${safeId}`}>Group</label>
 </div>
 
-<script is:inline>
+<script is:inline define:vars={{ safeId, storageKey }}>
+	// @ts-nocheck
 	(() => {
-		const saved = localStorage.getItem('starlight-dbt-view-preference');
+		const saved = localStorage.getItem(storageKey);
 		if (saved) {
-			// Cast the result to HTMLInputElement so we can access .checked
-			/** @type {HTMLInputElement | null} */
-			const input = document.querySelector(`input[name="dbt-view"][value="${saved}"]`);
-			if (input) {
-				input.checked = true;
-			}
+			const input = document.querySelector(`#v-${saved}-${safeId}`);
+			if (input) input.checked = true;
 		}
 	})();
 </script>
 
 <script>
+	// Logic for expanding folders remains global but reacts to local changes
 	const syncSidebarExpansion = () => {
-		// 1. Find the currently active link that is VISIBLE in the current view
+		// Find the currently active link that is visible in the current view
 		// We look for aria-current="page"
 		const activeLinks = Array.from(
 			document.querySelectorAll('.dbt-root-node a[aria-current="page"]')
 		) as HTMLElement[];
 
 		activeLinks.forEach((link) => {
-			// 2. Walk up the DOM tree from the link
+			// Walk up the DOM tree from the link
 			let parent = link.parentElement;
 			while (parent && !parent.classList.contains('dbt-root-node')) {
-				// 3. If we hit a <details> element, open it
-				if (parent instanceof HTMLDetailsElement) {
-					parent.open = true;
-				}
+				// If we hit a <details> element, open it
+				if (parent instanceof HTMLDetailsElement) parent.open = true;
 				parent = parent.parentElement;
 			}
 		});
 
-		// 4. Optional: Scroll the sidebar to the active link if it's off-screen
+		// Scroll the sidebar to the active link if it's off-screen
 		const visibleActive = Array.from(activeLinks).find((el) => el.offsetParent !== null);
 		if (visibleActive) {
 			visibleActive.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
@@ -57,8 +64,12 @@
 	// Trigger expansion when the radio buttons change
 	document.addEventListener('change', (e) => {
 		const target = e.target as HTMLInputElement;
-		if (target && target.name === 'dbt-view') {
-			localStorage.setItem('starlight-dbt-view-preference', target.value);
+		// Check if the change came from one of our dbt switchers
+		const switcher = target.closest('.dbt-switcher');
+		if (switcher instanceof HTMLElement) {
+			const projectId = switcher.dataset.projectId;
+			const storageKey = `dbt-view-pref-${projectId}`;
+			localStorage.setItem(storageKey, target.value);
 
 			// Allow a tiny delay for CSS 'display: block' to kick in
 			setTimeout(syncSidebarExpansion, 10);
