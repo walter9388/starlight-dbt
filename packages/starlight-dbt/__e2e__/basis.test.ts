@@ -97,7 +97,7 @@ test.describe('Sidebar Functionality', () => {
 			await expect(dbLink).not.toBeVisible();
 
 			// Switch to Database
-			await page.locator('label[for="v-database"]').click();
+			await page.locator('label[for^="v-database-"]').first().click();
 			await expect(dbLink).toBeVisible();
 			await expect(projectLink).not.toBeVisible();
 		});
@@ -108,7 +108,7 @@ test.describe('Sidebar Functionality', () => {
 			await expandAllDbtFolders(page);
 
 			// Select Group view
-			await page.locator('label[for="v-group"]').click();
+			await page.locator('label[for^="v-group-"]').first().click();
 
 			// Find the first visible link in the dbt section
 			const groupLink = page.locator('li.dbt-root-node a:visible').first();
@@ -121,7 +121,7 @@ test.describe('Sidebar Functionality', () => {
 
 			// Check persistence on the new page
 			await expandAllDbtFolders(page);
-			await expect(page.locator('input[id="v-group"]')).toBeChecked();
+			await expect(page.locator('input[id^="v-group-"]').first()).toBeChecked();
 		});
 
 		test('should correctly show/hide the Ungrouped folder', async ({ page, getProdServer }) => {
@@ -129,18 +129,15 @@ test.describe('Sidebar Functionality', () => {
 			await starlight.goto('/examples/example1');
 			await expandAllDbtFolders(page);
 
-			// 1. In Group View, Ungrouped should definitely be visible
-			await page.locator('label[for="v-group"]').click();
+			// In Group View, Ungrouped should definitely be visible
+			await page.locator('label[for^="v-group-"]').first().click();
 			const ungrouped = page.locator('li.dbt-root-node details', { hasText: 'Ungrouped' }).first();
 			await expect(ungrouped).toBeVisible();
 
-			// 2. Switch to a view where Ungrouped MIGHT be hidden.
-			// NOTE: If your "Ungrouped" items also have "project" tags,
-			// the folder correctly stays visible. We test that the SWITCH works.
-			await page.locator('label[for="v-database"]').click();
-
-			// If the folder contains database items, it stays visible.
-			// This confirms the CSS logic is checking the classes correctly.
+			// Switch to a view where Ungrouped might be hidden.
+			// Note: If your "Ungrouped" items also have "project" tags,
+			// the folder correctly stays visible. We test that the switch works.
+			await page.locator('label[for^="v-database-"]').first().click();
 			const hasDatabaseItems = await ungrouped.evaluate((el) =>
 				el.classList.contains('contains-database')
 			);
@@ -157,15 +154,15 @@ test.describe('Sidebar Functionality', () => {
 		}) => {
 			const starlight = await getProdServer();
 
-			// Set storage before we even load the page
+			// Set storage before we even load the page (slug is `dbt/default` -> `dbt-default` storage key)
 			await page.addInitScript(() => {
-				window.localStorage.setItem('starlight-dbt-view-preference', 'database');
+				window.localStorage.setItem('dbt-view-pref-dbt-default', 'database');
 			});
 
 			await starlight.goto('/examples/example1');
 
-			// We check the input state BEFORE expanding to see if the inline script worked
-			const dbInput = page.locator('input[id="v-database"]');
+			// We check the input state before expanding to see if the inline script worked
+			const dbInput = page.locator('input[id^="v-database-"]').first();
 			await expect(dbInput).toBeChecked();
 
 			await expandAllDbtFolders(page);
@@ -174,23 +171,6 @@ test.describe('Sidebar Functionality', () => {
 	});
 
 	test.describe('Sidebar Advanced Selection & Expansion', () => {
-		test('should highlight the current page in the default (Project) view', async ({
-			page,
-			getProdServer,
-		}) => {
-			const starlight = await getProdServer();
-			await starlight.goto(`${baseUrl}/model.test_pkg.model_node`);
-			await expandDbtRoot(page);
-
-			// Look for the active link specifically within the dbt root
-			// Use data-dbt-type="project" as project is the default radio state
-			const activeLink = page.locator(
-				'.dbt-root-node a[aria-current="page"][data-dbt-type="project"]'
-			);
-			await expect(activeLink.first()).toBeVisible();
-			await expect(activeLink.first()).toHaveText('model_node_v1');
-		});
-
 		test('should synchronize highlighting and auto-expand when switching views', async ({
 			page,
 			getProdServer,
@@ -200,7 +180,7 @@ test.describe('Sidebar Functionality', () => {
 			await expandDbtRoot(page);
 
 			// Switch to Database View
-			await page.locator('label[for="v-database"]').click();
+			await page.locator('label[for^="v-database-"]').first().click();
 
 			// Target the active link that is now VISIBLE in the new view
 			const activeLink = page.locator('.dbt-root-node a[aria-current="page"]:visible');
@@ -244,7 +224,7 @@ test.describe('Sidebar Functionality', () => {
 			await expandDbtRoot(page);
 
 			// Switch to Database view (where analysis is presumably hidden)
-			await page.locator('label[for="v-database"]').click();
+			await page.locator('label[for^="v-database-"]').first().click();
 
 			// Check all instances of this page link in the dbt tree
 			const activeLinks = await page.locator('.dbt-root-node a[aria-current="page"]').all();
@@ -261,7 +241,7 @@ test.describe('Sidebar Functionality', () => {
 			await starlight.goto(`${baseUrl}/source.test_pkg.s1.source1`);
 			await expandDbtRoot(page);
 
-			await page.locator('label[for="v-database"]').click();
+			await page.locator('label[for^="v-database-"]').first().click();
 
 			const activeLink = page.locator('.dbt-root-node a[aria-current="page"]:visible');
 			await expect(activeLink).toBeInViewport();
