@@ -158,14 +158,56 @@ const isCurrentPage = (href: string) => {
 	}
 
 	/* --- UI Refinements --- */
+	/* Style the top-level summary of a dbt project */
+	.dbt-root-node > details {
+		margin: 0.5rem 0;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.5rem;
+		background-color: var(--sl-color-gray-7);
+	}
+
+	/* Style the top-level summary of a dbt project */
+	.dbt-root-node > details > summary {
+		background-color: var(--sl-color-gray-5);
+		padding: 0.5rem 0.75rem;
+		font-weight: bold;
+		color: var(--sl-color-white);
+		border-bottom: 1px solid var(--sl-color-gray-4);
+	}
+
+	/* Hover effect for the project header */
+	.dbt-root-node > details > summary:hover {
+		background-color: var(--sl-color-gray-4);
+	}
+
+	/* Ensure the nested items look like they are inside the container */
+	.dbt-root-node ul {
+		padding-inline-start: 0.5rem;
+		margin-bottom: 0.5rem;
+	}
+	.dbt-root-node li {
+		margin-inline-start: 0;
+		padding-inline-start: 0;
+		border-inline-start: none;
+	}
+
 	/* Ensure summaries (folder headers) behave as Starlight headers when visible */
 	.dbt-root-node summary {
 		display: flex !important;
+		border-radius: 0.25rem;
+	}
+	.dbt-root-node > details > ul {
+		margin: 0 var(--sl-sidebar-item-padding-inline);
+		padding: 0;
+	}
+	.dbt-root-node > details > ul > li > details summary {
+		margin: 0 0 0.25rem 0;
 	}
 
 	/* Add a subtle indicator to parent folders that contain the active page */
 	.dbt-root-node > details details:has(a[aria-current='page']) > summary {
-		color: var(--sl-color-accent-high);
+		background: var(--sl-color-accent-low);
+		color: var(--sl-color-white);
 		font-weight: 600;
 	}
 
