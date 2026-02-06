@@ -74,21 +74,47 @@ const isCurrentPage = (href: string) => {
 							open={flattenSidebar(entry.entries).some((i) => i.isCurrent) || !entry.collapsed}
 							class:list={[containerClasses]}
 						>
-							<summary>
-								<span class="group-label">
-									{/* Added DbtIcons component for prefixing sidebar groups with icons */}
-									<DbtIcons depth={currentDepth} types={types} isRoot={isRoot} />
+							<summary class:list={{ 'dbt-root-summary': isRoot }}>
+								{isRoot ? (
+									/* Dbt project root layout */
+									<div class="root-header-stack">
+										<div class="root-header-row top">
+											<DbtIcons depth={currentDepth} types={types} isRoot={isRoot} />
+											<Badge text="latest" variant="success" size="small" />
+										</div>
+										<div class="root-header-row bottom">
+											<span class="group-label">
+												<span class="large">{cleanLabel}</span>
+												{entry.badge && (
+													<Badge
+														variant={entry.badge.variant}
+														class={entry.badge.class}
+														text={entry.badge.text}
+													/>
+												)}
+											</span>
+											<Icon name="right-caret" class="caret" size="1.25rem" />
+										</div>
+									</div>
+								) : (
+									/* Standard Layout for non-root groups */
+									<>
+										<span class="group-label">
+											{/* Added DbtIcons component for prefixing sidebar groups with icons */}
+											<DbtIcons depth={currentDepth} types={types} isRoot={isRoot} />
 
-									<span class="large">{cleanLabel}</span>
-									{entry.badge && (
-										<Badge
-											variant={entry.badge.variant}
-											class={entry.badge.class}
-											text={entry.badge.text}
-										/>
-									)}
-								</span>
-								<Icon name="right-caret" class="caret" size="1.25rem" />
+											<span class="large">{cleanLabel}</span>
+											{entry.badge && (
+												<Badge
+													variant={entry.badge.variant}
+													class={entry.badge.class}
+													text={entry.badge.text}
+												/>
+											)}
+										</span>
+										<Icon name="right-caret" class="caret" size="1.25rem" />
+									</>
+								)}
 							</summary>
 
 							{
@@ -219,11 +245,51 @@ const isCurrentPage = (href: string) => {
 		margin: 0 0 0.25rem 0;
 	}
 
-	/* Add a subtle indicator to parent folders that contain the active page */
+	/* Add indicator to parent folders that contain the active page */
 	.dbt-root-node > details details:has(a[aria-current='page']) > summary {
 		background: var(--sl-color-accent-low);
 		color: var(--sl-color-white);
 		font-weight: 600;
+	}
+
+	/* --- Root Header Stacked Layout --- */
+	.dbt-root-node > details > .dbt-root-summary {
+		display: block !important;
+		padding: 0 !important;
+	}
+
+	.root-header-stack {
+		display: flex;
+		flex-direction: column;
+		width: 100%;
+		gap: 0;
+	}
+
+	.root-header-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		width: 100%;
+		padding-inline: 0.75rem;
+	}
+
+	.root-header-row.bottom {
+		padding-bottom: 0.75rem;
+	}
+
+	.dbt-root-node .root-header-row.bottom .group-label {
+		gap: 0.5rem;
+		align-items: baseline;
+	}
+
+	.root-header-row.top :global(.sl-badge) {
+		font-size: 0.6rem;
+		padding: 0.1rem 0.3rem;
+		opacity: 0.9;
+	}
+
+	.dbt-root-node .root-header-row.bottom .caret {
+		align-self: center;
 	}
 
 	/* Original Starlight Styles */

@@ -25,7 +25,7 @@ function isCustomIcon(name: string | undefined): name is CustomStarlightIcon {
 	return !!name && name in CustomIconsObj;
 }
 
-if (isRoot) iconName = 'setting';
+if (isRoot) iconName = 'dbt';
 
 if (depth > 0) {
 	if (isFile) {
@@ -41,6 +41,7 @@ if (depth > 0) {
 	}
 }
 
+const size = isRoot ? '2rem' : '1rem';
 const hasOpenState = !!openIconName;
 ---
 
@@ -48,27 +49,42 @@ const hasOpenState = !!openIconName;
 	{
 		iconName &&
 			(isCustomIcon(iconName) ? (
-				<CustomIcon name={iconName} size="1rem" class="dbt-sidebar-icon default-icon" />
+				<CustomIcon name={iconName} size={size} class="dbt-sidebar-icon default-icon" />
 			) : (
-				<Icon name={iconName as any} size="1rem" class="dbt-sidebar-icon default-icon" />
+				<Icon name={iconName} size={size} class="dbt-sidebar-icon default-icon" />
 			))
 	}
 
 	{
 		openIconName &&
 			(isCustomIcon(openIconName) ? (
-				<CustomIcon name={openIconName} size="1rem" class="dbt-sidebar-icon open-icon" />
+				<CustomIcon name={openIconName} size={size} class="dbt-sidebar-icon open-icon" />
 			) : (
-				<Icon name={openIconName as any} size="1rem" class="dbt-sidebar-icon open-icon" />
+				<Icon name={openIconName} size={size} class="dbt-sidebar-icon open-icon" />
 			))
 	}
 </span>
 
 <style>
 	.icon-wrapper {
-		/* This makes the span act like it doesn't exist for layout purposes, 
-           letting the icons sit directly inside the flex parent */
 		display: contents;
+	}
+
+	.icon-wrapper.is-root {
+		display: inline-flex; /* Override 'contents' to allow dimensions */
+		width: 2rem; /* 32px wide */
+		height: 1rem; /* 16px high (the crop window) */
+		overflow: hidden; /* Hide the top/bottom 8px */
+		align-items: center; /* Centers the 32px icon vertically */
+		justify-content: center;
+		flex-shrink: 0;
+	}
+
+	.icon-wrapper.is-root :global(svg),
+	.icon-wrapper.is-root .dbt-sidebar-icon {
+		width: 2rem !important;
+		height: 2rem !important;
+		flex-shrink: 0;
 	}
 
 	.dbt-sidebar-icon {
