@@ -11,7 +11,7 @@ Beautiful, customisable, high-performance dbt docs using Starlight (Astro)
   - [x] Add persistance between page changes (radio option doesn't change)
   - [x] Make similar pages stick between radio option changes
   - [x] Make it work over different dbt projects
-  - [ ] update Icons / general style
+  - [x] update Icons / general style
   - [x] Test all the above
 - [x] Refactor to use content layer
   - [x] Move file loading to manager, and away from the json parsing
@@ -37,6 +37,7 @@ Beautiful, customisable, high-performance dbt docs using Starlight (Astro)
 - [ ] Docs and examples
 
 # Future Roadmap
+
 - [ ] External content population
   - [ ] S3
   - [ ] dbt-cloud
