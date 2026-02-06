@@ -137,27 +137,42 @@ const isCurrentPage = (href: string) => {
 	}
 
 	/* --- Scoped Visibility Rules --- */
-	/* These rules only trigger if the radio button INSIDE this specific root node is checked. */
+	/* These rules only trigger if the radio button inside this specific root node is checked. */
 
-	/* Project View */
+	/* Show the list items (containers) as blocks */
 	.dbt-root-node:has(input[value='project']:checked) .contains-project,
-	.dbt-root-node:has(input[value='project']:checked) a[data-dbt-type='project'] {
-		display: block !important;
-	}
-
-	/* Database View */
 	.dbt-root-node:has(input[value='database']:checked) .contains-database,
-	.dbt-root-node:has(input[value='database']:checked) a[data-dbt-type='database'] {
+	.dbt-root-node:has(input[value='group']:checked) .contains-group {
 		display: block !important;
 	}
 
-	/* Group View */
-	.dbt-root-node:has(input[value='group']:checked) .contains-group,
+	/* Show the links as flexbox */
+	/* This overrides the display:none and sets the correct layout mode for icons+text */
+	.dbt-root-node:has(input[value='project']:checked) a[data-dbt-type='project'],
+	.dbt-root-node:has(input[value='database']:checked) a[data-dbt-type='database'],
 	.dbt-root-node:has(input[value='group']:checked) a[data-dbt-type='group'] {
-		display: block !important;
+		display: flex !important;
+		align-items: center;
+		gap: 0.5rem;
+		line-height: 1.4;
 	}
 
 	/* --- UI Refinements --- */
+	/* Ensure all dbt links use flexbox by default */
+	.dbt-root-node a {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	/* Change group-label inside dbt-root-node to flex box for items */
+	.dbt-root-node .group-label {
+		display: flex !important;
+		gap: 0.5rem;
+		width: 100%;
+		align-items: center;
+	}
+
 	/* Style the top-level summary of a dbt project */
 	.dbt-root-node > details {
 		margin: 0.5rem 0;

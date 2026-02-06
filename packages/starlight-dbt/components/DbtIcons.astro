@@ -20,6 +20,11 @@ const isGroup = types.includes('group');
 type IconName = ComponentProps<typeof Icon>['name'];
 let iconName: IconName | CustomStarlightIcon | undefined;
 let openIconName: IconName | CustomStarlightIcon | undefined;
+
+function isCustomIcon(name: string | undefined): name is CustomStarlightIcon {
+	return !!name && name in CustomIconsObj;
+}
+
 if (isRoot) iconName = 'setting';
 
 if (depth > 0) {
@@ -36,12 +41,10 @@ if (depth > 0) {
 	}
 }
 
-function isCustomIcon(name: string | undefined): name is CustomStarlightIcon {
-	return !!name && name in CustomIconsObj;
-}
+const hasOpenState = !!openIconName;
 ---
 
-<span class="icon-wrapper">
+<span class:list={['icon-wrapper', { 'has-open-state': hasOpenState }]}>
 	{
 		iconName &&
 			(isCustomIcon(iconName) ? (
@@ -64,18 +67,16 @@ function isCustomIcon(name: string | undefined): name is CustomStarlightIcon {
 <style>
 	.icon-wrapper {
 		/* This makes the span act like it doesn't exist for layout purposes, 
-           letting the icons sit inline with the text. */
+           letting the icons sit directly inside the flex parent */
 		display: contents;
 	}
 
 	.dbt-sidebar-icon {
 		flex-shrink: 0;
-		margin-inline-end: 0.5rem; /* Re-adding spacing between icon and text */
 		color: var(--sl-color-gray-3);
-		vertical-align: middle;
 	}
 
-	/* ... keep the rest of your toggle and color logic below ... */
+	/* Toggle Logic */
 	.open-icon {
 		display: none !important;
 	}
@@ -85,12 +86,12 @@ function isCustomIcon(name: string | undefined): name is CustomStarlightIcon {
 		display: inline-block !important;
 	}
 
-	:global(details[open] > summary) .default-icon,
-	:global(details:has(a[aria-current='page']) > summary) .default-icon {
+	:global(details[open] > summary) .has-open-state .default-icon,
+	:global(details:has(a[aria-current='page']) > summary) .has-open-state .default-icon {
 		display: none !important;
 	}
 
-	/* Active colors */
+	/* Active Colors */
 	:global(a[aria-current='page']) .dbt-sidebar-icon {
 		color: var(--sl-color-text-invert) !important;
 	}
