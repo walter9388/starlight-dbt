@@ -1,0 +1,54 @@
+---
+import { Icon } from '@astrojs/starlight/components';
+import type { ComponentProps } from 'astro/types';
+
+interface Props {
+	isFile?: boolean;
+	isRoot?: boolean;
+	depth: number;
+	types: string[];
+}
+
+const { isFile, isRoot, depth, types } = Astro.props;
+
+const isDatabase = types.includes('database');
+const isProject = types.includes('project');
+const isGroup = types.includes('group');
+
+type IconName = ComponentProps<typeof Icon>['name'];
+let iconName: IconName | undefined;
+if (isRoot) iconName = 'setting';
+
+if (depth > 0) {
+	if (isFile) {
+		iconName = 'document';
+	} else if (isDatabase) {
+		// Database logic: Depth 1 = DB, Depth 2 = Schema
+		iconName = depth === 1 ? 'star' : 'puzzle';
+	} else if (isProject) {
+		iconName = 'rocket';
+	} else if (isGroup) {
+		iconName = 'heart';
+	}
+}
+---
+
+{iconName && <Icon name={iconName} size="1rem" class="dbt-sidebar-icon" />}
+
+<style>
+	.dbt-sidebar-icon {
+		flex-shrink: 0;
+		/* margin-inline-end: 0.5rem; */
+		color: var(--sl-color-gray-3);
+	}
+
+	/* This targets the icon for the selected file (Directly on the <a> tag) */
+	:global(a[aria-current='page']) .dbt-sidebar-icon {
+		color: var(--sl-color-text-invert) !important;
+	}
+
+	/* This targets the icon inside the summary of a details that contains the active page */
+	:global(.dbt-root-node details:has(a[aria-current='page']) > summary) .dbt-sidebar-icon {
+		color: var(--sl-color-accent-high) !important;
+	}
+</style>
