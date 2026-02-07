@@ -3,6 +3,7 @@
 // and adapted to add dbt sidebar functionality
 
 import { Badge, Icon } from '@astrojs/starlight/components';
+import { CustomIcon } from 'starlight-dbt/components';
 import SidebarRestorePoint from '../starlight-internals/components/SidebarRestorePoint.astro';
 import { getSidebarEntryMeta } from '../lib/utils/sidebar';
 import DbtSidebarRadioSwitcher from './DbtSidebarRadioSwitch.astro';
@@ -79,7 +80,9 @@ const isCurrentPage = (href: string) => {
 									/* Dbt project root layout */
 									<div class="root-header-stack">
 										<div class="root-header-row top">
-											<DbtIcons depth={currentDepth} types={types} isRoot={isRoot} />
+											<div class="dbt-logo-cropped">
+												<CustomIcon name="dbt" size="2rem" />
+											</div>
 											<Badge text="latest" variant="success" size="small" />
 										</div>
 										<div class="root-header-row bottom">
@@ -101,7 +104,7 @@ const isCurrentPage = (href: string) => {
 									<>
 										<span class="group-label">
 											{/* Added DbtIcons component for prefixing sidebar groups with icons */}
-											<DbtIcons depth={currentDepth} types={types} isRoot={isRoot} />
+											<DbtIcons depth={currentDepth} types={types} />
 
 											<span class="large">{cleanLabel}</span>
 											{entry.badge && (
@@ -273,7 +276,32 @@ const isCurrentPage = (href: string) => {
 		padding-inline: 0.75rem;
 	}
 
+	/* Top row: Cropped Icon and "latest" Badge */
+	.root-header-row.top {
+		height: 1.5rem;
+		padding-top: 0.5rem;
+	}
+
+	/* The Cropping Mechanism for the 32x32 icon -> 32x16 visible */
+	.dbt-logo-cropped {
+		display: inline-flex;
+		width: 2rem; /* 32px */
+		height: 1rem; /* 16px */
+		overflow: hidden;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+	}
+
+	.dbt-logo-cropped :global(svg) {
+		width: 2rem !important;
+		height: 2rem !important;
+		flex-shrink: 0;
+	}
+
+	/* Bottom row: Hero Label and Caret */
 	.root-header-row.bottom {
+		padding-top: 0.25rem;
 		padding-bottom: 0.75rem;
 	}
 
@@ -283,7 +311,7 @@ const isCurrentPage = (href: string) => {
 	}
 
 	.root-header-row.top :global(.sl-badge) {
-		font-size: 0.6rem;
+		font-size: 0.7rem;
 		padding: 0.1rem 0.3rem;
 		opacity: 0.9;
 	}
