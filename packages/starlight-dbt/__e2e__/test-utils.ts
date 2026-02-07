@@ -108,19 +108,19 @@ type Server = PreviewServer | DevServer;
  * This ensures nested links are considered "visible" by Playwright.
  */
 export const expandAllDbtFolders = async (page: Page) => {
-    const dbtRoots = page.locator('li.dbt-root-node');
+	const dbtRoots = page.locator('li.dbt-root-node');
 
-    // Use evaluateAll to iterate over every dbt root found on the page
-    await dbtRoots.evaluateAll((nodes) => {
-        nodes.forEach((node) => {
-            const details = node.querySelectorAll('details');
-            details.forEach((d) => (d.open = true));
-        });
-    });
+	// Use evaluateAll to iterate over every dbt root found on the page
+	await dbtRoots.evaluateAll((nodes) => {
+		nodes.forEach((node) => {
+			const details = node.querySelectorAll('details');
+			details.forEach((d) => (d.open = true));
+		});
+	});
 
-    // Verify at least the first one is ready. 
-    // We use .first() to avoid the same strict mode error here.
-    await expect(dbtRoots.first().locator('.dbt-switcher')).toBeVisible();
+	// Verify at least the first one is ready.
+	// We use .first() to avoid the same strict mode error here.
+	await expect(dbtRoots.first().locator('.dbt-switcher')).toBeVisible();
 };
 
 /**

@@ -1,27 +1,39 @@
 ---
+import { CustomIcon } from 'starlight-dbt/components';
+import { type StarlightIcon as CustomStarlightIcon } from './Icons';
+
 interface Props {
 	projectId: string;
 }
 const { projectId } = Astro.props;
 const safeId = projectId.replace(/[^a-z0-9]/gi, '-').toLowerCase();
 const storageKey = `dbt-view-pref-${safeId}`;
+
+const options: { value: string; label: string; icon: CustomStarlightIcon }[] = [
+	{ value: 'project', label: 'Project', icon: 'folder' },
+	{ value: 'database', label: 'Database', icon: 'database' },
+	{ value: 'group', label: 'Group', icon: 'group' },
+];
 ---
 
 <div class="dbt-switcher" data-project-id={safeId}>
-	<input
-		type="radio"
-		name={`dbt-view-${safeId}`}
-		id={`v-project-${safeId}`}
-		value="project"
-		checked
-	/>
-	<label for={`v-project-${safeId}`}>Project</label>
-
-	<input type="radio" name={`dbt-view-${safeId}`} id={`v-database-${safeId}`} value="database" />
-	<label for={`v-database-${safeId}`}>Database</label>
-
-	<input type="radio" name={`dbt-view-${safeId}`} id={`v-group-${safeId}`} value="group" />
-	<label for={`v-group-${safeId}`}>Group</label>
+	{
+		options.map((opt) => (
+			<>
+				<input
+					type="radio"
+					name={`dbt-view-${safeId}`}
+					id={`v-${opt.value}-${safeId}`}
+					value={opt.value}
+					checked={opt.value === 'project'}
+				/>
+				<label for={`v-${opt.value}-${safeId}`} title={opt.label}>
+					<CustomIcon name={opt.icon} size="1rem" />
+					<span class="label-text">{opt.label}</span>
+				</label>
+			</>
+		))
+	}
 </div>
 
 <script is:inline define:vars={{ safeId, storageKey }}>
@@ -89,6 +101,7 @@ const storageKey = `dbt-view-pref-${safeId}`;
 		margin: 0.5rem var(--sl-sidebar-item-padding-inline);
 		gap: 0.2rem;
 		border: 1px solid var(--sl-color-hairline);
+		container-type: inline-size;
 	}
 
 	.dbt-switcher input {
@@ -97,22 +110,58 @@ const storageKey = `dbt-view-pref-${safeId}`;
 
 	.dbt-switcher label {
 		flex: 1;
-		text-align: center;
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+		gap: 0.4rem;
+		min-width: 0;
 		font-size: 0.7rem;
-		padding: 0.25rem;
+		padding: 0.4rem 0.2rem;
 		cursor: pointer;
 		border-radius: 0.25rem;
 		color: var(--sl-color-gray-3);
 		text-transform: uppercase;
-		letter-spacing: 0.05em;
 		transition:
 			background 0.2s,
 			color 0.2s;
+	}
+
+	.dbt-switcher label :global(svg) {
+		flex-shrink: 0;
 	}
 
 	.dbt-switcher input:checked + label {
 		background: var(--sl-color-accent-low);
 		color: var(--sl-color-white);
 		font-weight: 600;
+	}
+
+	.label-text {
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	/* --- Stacked (Medium width) --- */
+	@container (max-width: 260px) {
+		.dbt-switcher label {
+			flex-direction: column;
+			gap: 0.1rem;
+			font-size: 0.6rem;
+			padding: 0.4rem 0.1rem;
+		}
+		.label-text {
+			letter-spacing: 0.02em;
+		}
+	}
+	/* --- Icon only (Narrow) --- */
+	@container (max-width: 180px) {
+		.label-text {
+			display: none;
+		}
+		.dbt-switcher label {
+			padding: 0.5rem 0;
+		}
 	}
 </style>

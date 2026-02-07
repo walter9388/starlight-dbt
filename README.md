@@ -10,9 +10,9 @@ Beautiful, customisable, high-performance dbt docs using Starlight (Astro)
 - [x] Add project/database/group to sidebar as dymanic custom component.
   - [x] Add persistance between page changes (radio option doesn't change)
   - [x] Make similar pages stick between radio option changes
-  - [ ] Make it work over different dbt projects
-  - [ ] update Icons
-  - [ ] Test all the above
+  - [x] Make it work over different dbt projects
+  - [x] update Icons / general style
+  - [x] Test all the above
 - [x] Refactor to use content layer
   - [x] Move file loading to manager, and away from the json parsing
   - [x] Make basic config work
@@ -28,11 +28,19 @@ Beautiful, customisable, high-performance dbt docs using Starlight (Astro)
 - [ ] improve test coverage on lib (unit testing)
 - [ ] sort out cicd (formatting, linting, testing)
 - [ ] sort out older versions of dbt manifest
-- [ ] S3 content population
 - [ ] Add option to markdown config for it to be before or after dbt component.
 - [ ] Add Markdown file generation inside dbt projects, as well as overrides / pretext
 - [ ] Versioning (sidebar vs entire page)?
-- [ ] Search
-- [ ] Graph
-- [ ] Theme
+- [ ] Search (is native ok?)
+- [ ] Basic graph clone
+- [ ] Themes
 - [ ] Docs and examples
+
+# Future Roadmap
+
+- [ ] External content population
+  - [ ] S3
+  - [ ] dbt-cloud
+- [ ] Better graph
+- [ ] Better search
+- [ ] Add run_results.json dbt artifact options / visualisations

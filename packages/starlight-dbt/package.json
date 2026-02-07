@@ -34,6 +34,7 @@
   ],
   "exports": {
     ".": "./index.ts",
+    "./components": "./components.ts",
     "./loaders": "./loaders.ts",
     "./types": "./lib/service/types.ts",
     "./components/DbtSidebar.astro": "./components/DbtSidebar.astro"

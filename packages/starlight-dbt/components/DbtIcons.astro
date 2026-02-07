@@ -1,0 +1,94 @@
+---
+import { Icon } from '@astrojs/starlight/components';
+import type { ComponentProps } from 'astro/types';
+import { CustomIcon } from 'starlight-dbt/components';
+import { type StarlightIcon as CustomStarlightIcon, Icons as CustomIconsObj } from './Icons';
+
+interface Props {
+	isFile?: boolean;
+	depth: number;
+	types: string[];
+}
+
+const { isFile, depth, types } = Astro.props;
+
+const isDatabase = types.includes('database');
+const isProject = types.includes('project');
+const isGroup = types.includes('group');
+
+type IconName = ComponentProps<typeof Icon>['name'];
+let iconName: IconName | CustomStarlightIcon | undefined;
+let openIconName: IconName | CustomStarlightIcon | undefined;
+
+function isCustomIcon(name: string | undefined): name is CustomStarlightIcon {
+	return !!name && name in CustomIconsObj;
+}
+
+if (depth > 0) {
+	if (isFile) {
+		iconName = 'document';
+	} else if (isDatabase) {
+		// Database logic: Depth 1 = DB, Depth 2 = Schema
+		iconName = depth === 1 ? 'database' : 'schema';
+	} else if (isProject) {
+		iconName = 'folder';
+		openIconName = 'folder-open';
+	} else if (isGroup) {
+		iconName = 'group';
+	}
+}
+
+const size = '1rem';
+const hasOpenState = !!openIconName;
+---
+
+<span class:list={['icon-wrapper', { 'has-open-state': hasOpenState }]}>
+	{
+		iconName &&
+			(isCustomIcon(iconName) ? (
+				<CustomIcon name={iconName} size={size} class="dbt-sidebar-icon default-icon" />
+			) : (
+				<Icon name={iconName} size={size} class="dbt-sidebar-icon default-icon" />
+			))
+	}
+
+	{
+		openIconName &&
+			(isCustomIcon(openIconName) ? (
+				<CustomIcon name={openIconName} size={size} class="dbt-sidebar-icon open-icon" />
+			) : (
+				<Icon name={openIconName} size={size} class="dbt-sidebar-icon open-icon" />
+			))
+	}
+</span>
+
+<style>
+	.icon-wrapper {
+		display: contents;
+	}
+
+	.dbt-sidebar-icon {
+		flex-shrink: 0;
+		color: var(--sl-color-gray-3);
+	}
+
+	/* Toggle Logic */
+	.open-icon {
+		display: none !important;
+	}
+
+	:global(details[open] > summary) .open-icon,
+	:global(details:has(a[aria-current='page']) > summary) .open-icon {
+		display: inline-block !important;
+	}
+
+	:global(details[open] > summary) .has-open-state .default-icon,
+	:global(details:has(a[aria-current='page']) > summary) .has-open-state .default-icon {
+		display: none !important;
+	}
+
+	/* Active Colors */
+	:global(a[aria-current='page']) .dbt-sidebar-icon {
+		color: var(--sl-color-text-invert) !important;
+	}
+</style>

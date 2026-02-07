@@ -3,9 +3,11 @@
 // and adapted to add dbt sidebar functionality
 
 import { Badge, Icon } from '@astrojs/starlight/components';
+import { CustomIcon } from 'starlight-dbt/components';
 import SidebarRestorePoint from '../starlight-internals/components/SidebarRestorePoint.astro';
 import { getSidebarEntryMeta } from '../lib/utils/sidebar';
 import DbtSidebarRadioSwitcher from './DbtSidebarRadioSwitch.astro';
+import DbtIcons from './DbtIcons.astro';
 
 // extract SidebarEntry and SidebarLink types from Astro.locals.starlightRoute.sidebar
 const { sidebar } = Astro.locals.starlightRoute;
@@ -15,9 +17,10 @@ type SidebarLink = Extract<SidebarEntry, { type: 'link' }>;
 interface Props {
 	sublist: SidebarEntry[];
 	nested?: boolean;
+	dbtDepth?: number;
 }
 
-const { sublist, nested } = Astro.props;
+const { sublist, nested, dbtDepth = -1 } = Astro.props;
 const { pathname } = Astro.url;
 
 // Taken from https://github.com/withastro/starlight/blob/ac3d87270e815009e58af7a90797262362b4f818/packages/starlight/utils/navigation.ts#L453-L458
@@ -39,6 +42,7 @@ const isCurrentPage = (href: string) => {
 		sublist.map((entry) => {
 			// determine if this entry is a dbt root or contains dbt types
 			const { isRoot, cleanLabel, projectSlug, types } = getSidebarEntryMeta(entry);
+			const currentDepth = isRoot ? 0 : dbtDepth >= 0 ? dbtDepth + 1 : -1;
 			const containerClasses = types.map((t) => `contains-${t}`).join(' ');
 
 			// Things added to the internal SidebarSublist component:
@@ -54,6 +58,9 @@ const isCurrentPage = (href: string) => {
 							class:list={[{ large: !nested }, entry.attrs.class]}
 							{...entry.attrs}
 						>
+							{/* Added DbtIcons component for prefixing sidebar files with icons */}
+							<DbtIcons isFile depth={currentDepth} types={types} />
+
 							<span>{cleanLabel}</span>
 							{entry.badge && (
 								<Badge
@@ -68,18 +75,49 @@ const isCurrentPage = (href: string) => {
 							open={flattenSidebar(entry.entries).some((i) => i.isCurrent) || !entry.collapsed}
 							class:list={[containerClasses]}
 						>
-							<summary>
-								<span class="group-label">
-									<span class="large">{cleanLabel}</span>
-									{entry.badge && (
-										<Badge
-											variant={entry.badge.variant}
-											class={entry.badge.class}
-											text={entry.badge.text}
-										/>
-									)}
-								</span>
-								<Icon name="right-caret" class="caret" size="1.25rem" />
+							<summary class:list={{ 'dbt-root-summary': isRoot }}>
+								{isRoot ? (
+									/* Dbt project root layout */
+									<div class="root-header-stack">
+										<div class="root-header-row top">
+											<div class="dbt-logo-cropped">
+												<CustomIcon name="dbt" size="2rem" />
+											</div>
+											<Badge text="latest" variant="success" size="small" />
+										</div>
+										<div class="root-header-row bottom">
+											<span class="group-label">
+												<span class="large">{cleanLabel}</span>
+												{entry.badge && (
+													<Badge
+														variant={entry.badge.variant}
+														class={entry.badge.class}
+														text={entry.badge.text}
+													/>
+												)}
+											</span>
+											<Icon name="right-caret" class="caret" size="1.25rem" />
+										</div>
+									</div>
+								) : (
+									/* Standard Layout for non-root groups */
+									<>
+										<span class="group-label">
+											{/* Added DbtIcons component for prefixing sidebar groups with icons */}
+											<DbtIcons depth={currentDepth} types={types} />
+
+											<span class="large">{cleanLabel}</span>
+											{entry.badge && (
+												<Badge
+													variant={entry.badge.variant}
+													class={entry.badge.class}
+													text={entry.badge.text}
+												/>
+											)}
+										</span>
+										<Icon name="right-caret" class="caret" size="1.25rem" />
+									</>
+								)}
 							</summary>
 
 							{
@@ -88,7 +126,7 @@ const isCurrentPage = (href: string) => {
 							}
 
 							<SidebarRestorePoint />
-							<Astro.self sublist={entry.entries} nested />
+							<Astro.self sublist={entry.entries} nested dbtDepth={currentDepth} />
 						</details>
 					)}
 				</li>
@@ -128,36 +166,158 @@ const isCurrentPage = (href: string) => {
 	}
 
 	/* --- Scoped Visibility Rules --- */
-	/* These rules only trigger if the radio button INSIDE this specific root node is checked. */
+	/* These rules only trigger if the radio button inside this specific root node is checked. */
 
-	/* Project View */
+	/* Show the list items (containers) as blocks */
 	.dbt-root-node:has(input[value='project']:checked) .contains-project,
-	.dbt-root-node:has(input[value='project']:checked) a[data-dbt-type='project'] {
-		display: block !important;
-	}
-
-	/* Database View */
 	.dbt-root-node:has(input[value='database']:checked) .contains-database,
-	.dbt-root-node:has(input[value='database']:checked) a[data-dbt-type='database'] {
+	.dbt-root-node:has(input[value='group']:checked) .contains-group {
 		display: block !important;
 	}
 
-	/* Group View */
-	.dbt-root-node:has(input[value='group']:checked) .contains-group,
+	/* Show the links as flexbox */
+	/* This overrides the display:none and sets the correct layout mode for icons+text */
+	.dbt-root-node:has(input[value='project']:checked) a[data-dbt-type='project'],
+	.dbt-root-node:has(input[value='database']:checked) a[data-dbt-type='database'],
 	.dbt-root-node:has(input[value='group']:checked) a[data-dbt-type='group'] {
-		display: block !important;
+		display: flex !important;
+		align-items: center;
+		gap: 0.5rem;
+		line-height: 1.4;
 	}
 
 	/* --- UI Refinements --- */
+	/* Ensure all dbt links use flexbox by default */
+	.dbt-root-node a {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	/* Change group-label inside dbt-root-node to flex box for items */
+	.dbt-root-node .group-label {
+		display: flex !important;
+		gap: 0.5rem;
+		width: 100%;
+		align-items: center;
+	}
+
+	/* Style the top-level summary of a dbt project */
+	.dbt-root-node > details {
+		margin: 0.5rem 0;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.5rem;
+		background-color: var(--sl-color-gray-7);
+	}
+
+	/* Style the top-level summary of a dbt project */
+	.dbt-root-node > details > summary {
+		background-color: var(--sl-color-gray-5);
+		padding: 0.5rem 0.75rem;
+		font-weight: bold;
+		color: var(--sl-color-white);
+		border-bottom: 1px solid var(--sl-color-gray-4);
+	}
+
+	/* Hover effect for the project header */
+	.dbt-root-node > details > summary:hover {
+		background-color: var(--sl-color-gray-4);
+	}
+
+	/* Ensure the nested items look like they are inside the container */
+	.dbt-root-node ul {
+		padding-inline-start: 0.5rem;
+		margin-bottom: 0.5rem;
+	}
+	.dbt-root-node li {
+		margin-inline-start: 0;
+		padding-inline-start: 0;
+		border-inline-start: none;
+	}
+
 	/* Ensure summaries (folder headers) behave as Starlight headers when visible */
 	.dbt-root-node summary {
 		display: flex !important;
+		border-radius: 0.25rem;
+	}
+	.dbt-root-node > details > ul {
+		margin: 0 var(--sl-sidebar-item-padding-inline) 0.25rem;
+		padding: 0;
+	}
+	.dbt-root-node > details > ul > li > details summary {
+		margin: 0 0 0.25rem 0;
 	}
 
-	/* Add a subtle indicator to parent folders that contain the active page */
+	/* Add indicator to parent folders that contain the active page */
 	.dbt-root-node > details details:has(a[aria-current='page']) > summary {
-		color: var(--sl-color-accent-high);
+		background: var(--sl-color-accent-low);
+		color: var(--sl-color-white);
 		font-weight: 600;
+	}
+
+	/* --- Root Header Stacked Layout --- */
+	.dbt-root-node > details > .dbt-root-summary {
+		display: block !important;
+		padding: 0 !important;
+	}
+
+	.root-header-stack {
+		display: flex;
+		flex-direction: column;
+		width: 100%;
+		gap: 0;
+	}
+
+	.root-header-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		width: 100%;
+		padding-inline: 0.75rem;
+	}
+
+	/* Top row: Cropped Icon and "latest" Badge */
+	.root-header-row.top {
+		height: 1.5rem;
+		padding-top: 0.5rem;
+	}
+
+	/* The Cropping Mechanism for the 32x32 icon -> 32x16 visible */
+	.dbt-logo-cropped {
+		display: inline-flex;
+		width: 2rem; /* 32px */
+		height: 1rem; /* 16px */
+		overflow: hidden;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+	}
+
+	.dbt-logo-cropped :global(svg) {
+		width: 2rem !important;
+		height: 2rem !important;
+		flex-shrink: 0;
+	}
+
+	/* Bottom row: Hero Label and Caret */
+	.root-header-row.bottom {
+		padding-top: 0.25rem;
+		padding-bottom: 0.75rem;
+	}
+
+	.dbt-root-node .root-header-row.bottom .group-label {
+		gap: 0.5rem;
+		align-items: baseline;
+	}
+
+	.root-header-row.top :global(.sl-badge) {
+		font-size: 0.7rem;
+		padding: 0.1rem 0.3rem;
+		opacity: 0.9;
+	}
+
+	.dbt-root-node .root-header-row.bottom .caret {
+		align-self: center;
 	}
 
 	/* Original Starlight Styles */
