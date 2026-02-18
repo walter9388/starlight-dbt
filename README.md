@@ -41,6 +41,9 @@ Beautiful, customisable, high-performance dbt docs using Starlight (Astro)
 - [ ] External content population
   - [ ] S3
   - [ ] dbt-cloud
+- [ ] Improve internal typings
+  - [ ] Use zod in parsing layer instead of 3rd party libraries
+  - [ ] Use zod in transformation layer
 - [ ] Better graph
 - [ ] Better search
 - [ ] Add run_results.json dbt artifact options / visualisations
