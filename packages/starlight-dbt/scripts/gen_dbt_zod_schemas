@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# Get the directory where this script is located
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
+# Set ROOT_DIR to the directory above the script
+ROOT_DIR=$(dirname "$SCRIPT_DIR")
+
+# Configuration
+TOOL_VERSION="2.7.0"
+OUTPUT_DIR_NAME="lib/schemas"
+OUTPUT_DIR="$ROOT_DIR/$OUTPUT_DIR_NAME"
+
+# Define schemas in the format: "filename|variableName|typeName|url"
+SCHEMAS=(
+	"catalog_v1|dbtCatalogSchema|DbtCatalog|https://schemas.getdbt.com/dbt/catalog/v1.json"
+	"manifest_v12|dbtManifestSchema|DbtManifest|https://schemas.getdbt.com/dbt/manifest/v12.json"
+)
+
+mkdir -p "$OUTPUT_DIR"
+
+echo "Starting dbt Zod schema generation using json-schema-to-zod@$TOOL_VERSION..."
+echo "Target directory: $OUTPUT_DIR"
+
+for entry in "${SCHEMAS[@]}"; do
+	# Parse the entry string into variables
+	IFS="|" read -r FILE_NAME VAR_NAME TYPE_NAME URL <<<"$entry"
+
+	echo "Processing $FILE_NAME..."
+
+	# Create/Overwrite the file and add the custom Astro import after generation metadata
+	cat <<EOF >"$OUTPUT_DIR/$FILE_NAME.ts"
+// This file was generated automatically on $(date +"%Y-%m-%d") via \`https://github.com/walter9388/starlight-dbt/blob/main/packages/starlight-dbt/scripts/gen_dbt_zod_schemas\`
+// Tool: json-schema-to-zod@$TOOL_VERSION
+// Source: $URL
+
+import { z } from 'astro/zod';
+EOF
+
+	# Fetch, convert, and append to the file
+	# We use @$TOOL_VERSION to lock the version
+	# --type "$TYPE_NAME" ensures the exported type has the correct name
+	curl -s "$URL" | pnpx json-schema-to-zod@$TOOL_VERSION \
+		--name "$VAR_NAME" \
+		--type "$TYPE_NAME" \
+		--withJsdocs \
+		--noImport >>"$OUTPUT_DIR/$FILE_NAME.ts"
+
+	if [ $? -eq 0 ]; then
+		echo "Completed: $OUTPUT_DIR/$FILE_NAME.ts"
+	else
+		echo "Failed to process $FILE_NAME"
+	fi
+done
+
+echo "Formatting schemas in $OUTPUT_DIR"
+pnpm prettier -w "$OUTPUT_DIR"
+
+echo "Process finished. Schemas are available in $OUTPUT_DIR"
