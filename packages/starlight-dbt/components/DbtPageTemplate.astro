@@ -2,8 +2,29 @@
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import { getCollection } from 'astro:content';
 
+import type { DbtCollectionEntry } from '../loaders';
+
+/**
+ * A single entry from the `dbt` content collection.
+ *
+ * Typed explicitly here because `DbtPageTemplate.astro` lives inside the plugin
+ * package, which has no `astro.config.mjs` and therefore no generated
+ * `.astro/content.d.ts`. Without the generated types, `getCollection('dbt')`
+ * returns `any`. Declaring this shape lets TypeScript type-check both
+ * `getStaticPaths` and the template body without relying on Astro's generated
+ * types in the plugin's own compilation context.
+ *
+ * In the end-user's site, Astro generates these types from their
+ * `content.config.ts` — so this explicit type is consistent with what they get.
+ */
+type DbtEntry = {
+	id: string;
+	collection: 'dbt';
+	data: DbtCollectionEntry;
+};
+
 export async function getStaticPaths() {
-	const dbtEntries = await getCollection('dbt');
+	const dbtEntries = (await getCollection('dbt')) as DbtEntry[];
 	return dbtEntries.map((entry) => {
 		return {
 			params: { slug: entry.id },
@@ -12,8 +33,12 @@ export async function getStaticPaths() {
 	});
 }
 
+interface Props {
+	entry: DbtEntry;
+}
+
 const { entry } = Astro.props;
-const node = entry.data; // This is the validated node data from your schema
+const node = entry.data;
 ---
 
 <StarlightPage frontmatter={{ title: node.name }}>
