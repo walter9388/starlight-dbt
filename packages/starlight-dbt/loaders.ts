@@ -6,12 +6,13 @@ import { getOrInitDbtService } from './lib/manager';
 
 import type { Loader } from 'astro/loaders';
 
-export { dbtCollectionSchema } from './lib/schemas/collection';
+import { dbtCollectionSchema } from './lib/schemas/collection';
 export type { DbtCollectionEntry, DbtCollectionNode } from './lib/schemas/collection';
 
 export function dbtLoader(): Loader {
 	return {
 		name: 'dbt-loader',
+		schema: dbtCollectionSchema,
 		load: async ({ store, logger, parseData, config: astroConfig }) => {
 			if (starlightDbtConfig._projects.length === 0) {
 				logger.warn('No dbt projects found to load.');
