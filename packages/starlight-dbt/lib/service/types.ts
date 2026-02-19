@@ -1,16 +1,6 @@
-import type { CatalogArtifactV1 } from '@yu-iskw/dbt-artifacts-parser/dist/catalog';
-import type {
-	WritableManifest,
-	Seed,
-	Analysis,
-	SingularTest,
-	HookNode,
-	Model,
-	SqlOperation,
-	GenericTest,
-	Snapshot,
-	Function,
-} from '@yu-iskw/dbt-artifacts-parser/dist/manifest';
+import type { DbtCatalog, DbtCatalogTable } from '../schemas/catalog';
+import type { ManifestColumnNode } from '../schemas/manifest';
+export type { ManifestColumnNode };
 
 /**
  * Metadata attached to a column-level dbt test.
@@ -35,32 +25,142 @@ export interface TestInfo {
 	fk_model?: unknown;
 }
 
-export type ManifestArtifact = WritableManifest;
-export type ManifestMetadata = ManifestArtifact['metadata'];
-export type ManifestNode = ManifestArtifact['nodes'][string] & { label?: string };
-type ManifestSource = ManifestArtifact['sources'][string] & { label?: string };
-type ManifestExposure = ManifestArtifact['exposures'][string];
-type ManifestMetric = ManifestArtifact['metrics'][string];
-type ManifestSemanticModel = ManifestArtifact['semantic_models'][string];
-type ManifestSavedQuery = ManifestArtifact['saved_queries'][string];
-type ManifestUnitTest = ManifestArtifact['unit_tests'][string] & { label?: string };
-type ManifestMacros = ManifestArtifact['macros'];
-// type ManifestSeed = Extract<ManifestArtifact['nodes'][string], { resource_type: 'seed' }>;
-// type ManifestAnalysis = Extract<ManifestArtifact['nodes'][string], { resource_type: 'analysis' }>;
-// type ManifestSingularTest = Extract<ManifestArtifact['nodes'][string], { resource_type: 'test' }>;
-// type ManifestHookNode = Extract<ManifestArtifact['nodes'][string], { resource_type: 'hooknode' }>;
-// type ManifestModel = Extract<ManifestArtifact['nodes'][string], { resource_type: 'model' }>;
-// type ManifestSqlOperation = Extract<
-// 	ManifestArtifact['nodes'][string],
-// 	{ resource_type: 'sqloperation' }
-// >;
-// type ManifestGenericTest = Extract<
-// 	ManifestArtifact['nodes'][string],
-// 	{ resource_type: 'generictest' }
-// >;
-// type ManifestSnapshot = Extract<ManifestArtifact['nodes'][string], { resource_type: 'snapshot' }>;
-// type ManifestFunction = Extract<ManifestArtifact['nodes'][string], { resource_type: 'function' }>;
-export type AugmentedMacro = ManifestMacros[string] & {
+// ---------------------------------------------------------------------------
+// Manifest node interfaces — replaces the former @yu-iskw/dbt-artifacts-parser imports
+// ---------------------------------------------------------------------------
+
+/**
+ * Represents any node from the manifest `nodes` dict.
+ *
+ * All location and resource-type-specific fields are declared as optional to
+ * accommodate the many resource types (model, seed, snapshot, test, hook, etc.).
+ * Extra artifact properties not declared here exist at runtime via the Zod
+ * passthrough parser, but are not reflected in this TypeScript type.
+ */
+export interface ManifestNode {
+	unique_id: string;
+	name: string;
+	resource_type: string;
+	package_name: string;
+	original_file_path: string;
+	fqn: string[];
+	description?: string;
+	tags?: string[];
+	docs?: { show?: boolean };
+	meta?: Record<string, unknown>;
+	columns?: Record<string, ManifestColumnNode>;
+	depends_on?: { nodes?: string[]; macros?: string[] };
+	/** Human-readable display label — augmented by buildProject. */
+	label?: string;
+	// Location fields (model, seed, snapshot, source)
+	database?: string | null;
+	schema?: string | null;
+	alias?: string | null;
+	identifier?: string | null;
+	// Config block (model, seed, snapshot, etc.)
+	config?: { materialized?: string };
+	// Model-specific
+	group?: string | null;
+	access?: 'private' | 'protected' | 'public';
+	version?: number | string | null;
+	raw_code?: string | null;
+	compiled_code?: string | null;
+	refs?: Array<{ name: string }>;
+	// Source-specific
+	source_name?: string;
+	source_description?: string;
+	// Exposure-specific
+	type?: string;
+	// Test-specific
+	test_metadata?: {
+		name: string;
+		namespace?: string | null;
+		kwargs?: Record<string, unknown>;
+	};
+	column_name?: string | null;
+	// Macro fields (augmented)
+	macro_sql?: string;
+	is_adapter_macro?: boolean;
+	is_adapter_macro_impl?: boolean;
+	impls?: Record<string, string>;
+}
+
+export interface ManifestMetadata {
+	dbt_schema_version?: string;
+	dbt_version?: string;
+	generated_at?: string;
+	invocation_id?: string | null;
+	project_name?: string | null;
+	adapter_type?: string | null;
+	quoting?: Record<string, unknown> | null;
+}
+
+/**
+ * Represents a source entry from the manifest `sources` dict, including the
+ * `label` field augmented by buildProject.
+ */
+export type ManifestSource = ManifestNode & {
+	resource_type: 'source';
+	source_name: string;
+	label?: string;
+};
+
+/**
+ * Represents an exposure entry from the manifest `exposures` dict.
+ */
+export type ManifestExposure = ManifestNode & {
+	resource_type: 'exposure';
+	type?: string;
+	label?: string;
+};
+
+/**
+ * Represents a metric entry from the manifest `metrics` dict.
+ */
+export type ManifestMetric = ManifestNode & {
+	resource_type: 'metric';
+};
+
+/**
+ * Represents a semantic model entry from the manifest `semantic_models` dict.
+ */
+export type ManifestSemanticModel = ManifestNode & {
+	resource_type: 'semantic_model';
+	label?: string;
+};
+
+/**
+ * Represents a saved query entry from the manifest `saved_queries` dict.
+ */
+export type ManifestSavedQuery = ManifestNode & {
+	resource_type: 'saved_query';
+	label?: string;
+};
+
+/**
+ * Represents a unit test entry from the manifest `unit_tests` dict.
+ */
+export type ManifestUnitTest = ManifestNode & {
+	resource_type: 'unit_test';
+	label?: string;
+};
+
+/**
+ * Represents a macro entry from the manifest `macros` dict.
+ */
+export type ManifestMacro = ManifestNode & {
+	resource_type: 'macro';
+	macro_sql: string;
+	arguments?: unknown[];
+};
+
+export type ManifestMacros = Record<string, ManifestMacro>;
+
+// ---------------------------------------------------------------------------
+// Augmented types (post-buildProject)
+// ---------------------------------------------------------------------------
+
+export type AugmentedMacro = ManifestMacro & {
 	impls?: Record<string, string>;
 	is_adapter_macro?: boolean;
 	is_adapter_macro_impl?: boolean;
@@ -69,18 +169,33 @@ export type AugmentedMacros = {
 	[k: string]: AugmentedMacro;
 };
 
-type ManifestColumns = ManifestNode['columns'];
-// type AugmentedColumns = ManifestColumns extends object
-// 	? { [K in keyof ManifestColumns]: ManifestColumns[K] & { tests?: TestInfo[] } }
-// 	: never;
-
-type NonEmptyManifestColumns = NonNullable<ManifestColumns>;
+type NonEmptyManifestColumns = NonNullable<ManifestNode['columns']>;
 type AugmentedColumns = {
 	[K in keyof NonEmptyManifestColumns]: NonEmptyManifestColumns[K] & { tests?: TestInfo[] };
 };
 export type AugmentedColumnNode = Omit<ManifestNode, 'columns'> & {
 	columns?: AugmentedColumns;
 };
+
+/**
+ * The raw dbt manifest v12 artifact as returned by parseDbtManifest.
+ *
+ * All top-level dicts use their specific node types.
+ * This type is intentionally kept without an index signature so that
+ * TypeScript intersections (used in AugmentedManifestArtifact and Project)
+ * resolve correctly.
+ */
+export interface ManifestArtifact {
+	metadata: ManifestMetadata;
+	nodes: Record<string, ManifestNode>;
+	sources: Record<string, ManifestSource>;
+	macros: Record<string, ManifestMacro>;
+	exposures: Record<string, ManifestExposure>;
+	metrics: Record<string, ManifestMetric>;
+	semantic_models: Record<string, ManifestSemanticModel>;
+	saved_queries: Record<string, ManifestSavedQuery>;
+	unit_tests: Record<string, ManifestUnitTest>;
+}
 
 // used after buildProject to represent combined nodes and sources
 export type AugmentedManifestArtifact = Omit<ManifestArtifact, 'nodes'> & {
@@ -98,55 +213,64 @@ export type AugmentedManifestArtifact = Omit<ManifestArtifact, 'nodes'> & {
 	unit_tests: Record<string, ManifestUnitTest>;
 };
 
-export type CatalogArtifact = CatalogArtifactV1;
+// ---------------------------------------------------------------------------
+// Catalog types — derived from generated Zod schema (no index signature)
+// ---------------------------------------------------------------------------
+
+/**
+ * The raw dbt catalog v1 artifact as returned by parseDbtCatalog.
+ *
+ * Aliased from the generated DbtCatalog type whose .strict() schemas produce
+ * no index signature — safe to use in TypeScript intersections without
+ * causing AugmentedCatalogArtifact or Project properties to resolve to `never`.
+ */
+export type CatalogArtifact = DbtCatalog;
+
 export type CatalogMetadata = CatalogArtifact['metadata'];
-type CatalogNode = CatalogArtifact['nodes'][string];
-type CatalogSource = CatalogArtifact['sources'][string];
+type CatalogNode = DbtCatalogTable;
+type CatalogSource = DbtCatalogTable;
+
 // used after buildProject to represent combined nodes and sources
 export type AugmentedCatalogArtifact = CatalogArtifact & {
 	nodes: Record<string, CatalogNode | CatalogSource>;
 };
 
+// ---------------------------------------------------------------------------
+// Combined project type
+// ---------------------------------------------------------------------------
+
 export type Project = AugmentedManifestArtifact &
 	AugmentedCatalogArtifact & { searchable?: (AugmentedColumnNode | AugmentedMacros[string])[] };
 
-export type ProjectNode =
-	| Seed
-	| Analysis
-	| SingularTest
-	| HookNode
-	| Model
-	| SqlOperation
-	| GenericTest
-	| Snapshot
-	| Function
-	| AugmentedColumnNode
-	| ManifestSource
-	| ManifestExposure
-	| ManifestMetric
-	| ManifestSemanticModel
-	| ManifestSavedQuery
-	| ManifestUnitTest
-	| CatalogNode
-	| CatalogSource;
+/**
+ * Union of any node that may appear in a project (manifest or catalog origin).
+ */
+export type ProjectNode = ManifestNode | CatalogNode;
 
-export type FilterProjectNode =
-	| Extract<
-			ProjectNode,
-			{
-				resource_type:
-					| 'snapshot'
-					| 'source'
-					| 'seed'
-					| 'model'
-					| 'analysis'
-					| 'exposure'
-					| 'metric'
-					| 'semantic_model'
-					| 'saved_query';
-			}
-	  >
-	| SingularTest;
+/**
+ * Nodes that appear in the tree views — all resource types displayed in the sidebar
+ * except internal manifest types (hook, sql_operation, generic_test, function).
+ * The `resource_type` field is narrowed to the accepted values.
+ */
+export type FilterProjectNode = ManifestNode & {
+	resource_type:
+		| 'snapshot'
+		| 'source'
+		| 'seed'
+		| 'model'
+		| 'analysis'
+		| 'exposure'
+		| 'metric'
+		| 'semantic_model'
+		| 'saved_query'
+		| 'test';
+};
+
+/** Raw artifact files as loaded and parsed from disk. */
+export interface DbtArtifacts {
+	manifest: Record<string, unknown>;
+	catalog: Record<string, unknown>;
+}
 
 export interface DbtService {
 	project: Project;
@@ -166,7 +290,7 @@ export interface DbtService {
 		TreeFile<FilterProjectNode | MacroValues | SemanticModelValues | UnitTestValues>
 	>;
 	files: {
-		manifest: AugmentedManifestArtifact;
+		manifest: ManifestArtifact;
 		catalog: AugmentedCatalogArtifact;
 	};
 	loaded: boolean;
@@ -174,6 +298,11 @@ export interface DbtService {
 	build: () => void;
 	populate_node_map: () => void;
 }
+
+// ---------------------------------------------------------------------------
+// Per-dict value types (used in tree builders and elsewhere)
+// ---------------------------------------------------------------------------
+
 type ValueOf<T> = T[keyof T];
 export type NodeValues = ValueOf<Project['nodes']>;
 export type SourceValues = ValueOf<Project['sources']>;
@@ -183,6 +312,10 @@ export type SemanticModelValues = ValueOf<Project['semantic_models']>;
 export type SavedQueryValues = ValueOf<Project['saved_queries']>;
 export type MacroValues = ValueOf<Project['macros']>;
 export type UnitTestValues = ValueOf<Project['unit_tests']>;
+
+// ---------------------------------------------------------------------------
+// Tree types
+// ---------------------------------------------------------------------------
 
 export type TreeNodeType =
 	| 'source'

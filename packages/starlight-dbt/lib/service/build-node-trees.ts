@@ -6,6 +6,7 @@ import type {
 	SavedQueryValues,
 	MacroValues,
 	FilterProjectNode,
+	ManifestNode,
 	TreeFolder,
 	TreeFile,
 	TreeItem,
@@ -331,12 +332,13 @@ export function buildDatabaseTree(
 	select?: string
 ): TreeFolder<FilterProjectNode>[] {
 	const databases: Record<string, TreeFolder<FilterProjectNode>> = {};
-	type DatabaseProjectNode = Extract<
-		FilterProjectNode,
-		{
-			resource_type: 'source' | 'snapshot' | 'seed' | 'model';
-		}
-	>;
+	// Extract<FilterProjectNode, ...> returns `never` because FilterProjectNode
+	// is an intersection type, not a discriminated union. Use a direct intersection
+	// with ManifestNode (which declares identifier?, alias?, database?, schema?)
+	// so all downstream property accesses type-check correctly.
+	type DatabaseProjectNode = ManifestNode & {
+		resource_type: 'source' | 'snapshot' | 'seed' | 'model';
+	};
 
 	const visibleNodes = nodes.filter((node): node is DatabaseProjectNode => {
 		if (!isDocsVisible(node)) return false;

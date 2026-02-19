@@ -6,6 +6,9 @@ import { getOrInitDbtService } from './lib/manager';
 
 import type { Loader } from 'astro/loaders';
 
+export { dbtCollectionSchema } from './lib/schemas/collection';
+export type { DbtCollectionEntry, DbtCollectionNode } from './lib/schemas/collection';
+
 export function dbtLoader(): Loader {
 	return {
 		name: 'dbt-loader',
