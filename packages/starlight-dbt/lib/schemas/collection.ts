@@ -21,7 +21,7 @@ const testInfoSchema = z.object({
 const augmentedColumnSchema = z
 	.object({
 		name: z.string(),
-		description: z.string().optional(),
+		description: z.string().nullable().optional(),
 		data_type: z.string().nullable().optional(),
 		meta: z.record(z.unknown()).optional(),
 		tags: z.array(z.string()).optional(),
@@ -37,7 +37,7 @@ const baseFields = {
 	name: z.string(),
 	package_name: z.string(),
 	original_file_path: z.string(),
-	description: z.string().optional(),
+	description: z.string().nullable().optional(),
 	tags: z.array(z.string()).optional(),
 	docs: z.object({ show: z.boolean().optional() }).passthrough().optional(),
 	meta: z.record(z.unknown()).optional(),
@@ -132,7 +132,7 @@ export const collectionSourceNodeSchema = z
 		...baseFields,
 		resource_type: z.literal('source'),
 		source_name: z.string(),
-		source_description: z.string().optional(),
+		source_description: z.string().nullable().optional(),
 		database: z.string().nullable().optional(),
 		schema: z.string().optional(),
 		identifier: z.string().optional(),

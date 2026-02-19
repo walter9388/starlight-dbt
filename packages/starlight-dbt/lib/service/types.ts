@@ -44,7 +44,7 @@ export interface ManifestNode {
 	package_name: string;
 	original_file_path: string;
 	fqn: string[];
-	description?: string;
+	description?: string | null;
 	tags?: string[];
 	docs?: { show?: boolean };
 	meta?: Record<string, unknown>;
@@ -68,7 +68,7 @@ export interface ManifestNode {
 	refs?: Array<{ name: string }>;
 	// Source-specific
 	source_name?: string;
-	source_description?: string;
+	source_description?: string | null;
 	// Exposure-specific
 	type?: string;
 	// Test-specific
