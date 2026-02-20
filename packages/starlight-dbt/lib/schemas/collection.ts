@@ -1,8 +1,6 @@
 import { z } from 'astro/zod';
 
-// ---------------------------------------------------------------------------
-// Shared sub-schemas
-// ---------------------------------------------------------------------------
+// --- Shared sub-schemas
 
 /**
  * Schema for a test attached to a column, augmented by buildProject.
@@ -57,7 +55,6 @@ const baseFields = {
 	label: z.string().optional(),
 };
 
-// ---------------------------------------------------------------------------
 // Per-resource-type node schemas
 //
 // Each schema declares only the resource_type discriminant, shared baseFields,
@@ -69,7 +66,6 @@ const baseFields = {
 // accepted via .passthrough() without being declared in the TypeScript type.
 // Use ManifestModelNode, ManifestSourceNode, etc. from schemas/manifest.ts
 // for fully-typed access to manifest fields.
-// ---------------------------------------------------------------------------
 
 /**
  * Schema for model nodes (resource_type: 'model').
@@ -211,9 +207,7 @@ export const collectionSingularTestNodeSchema = z
 	})
 	.passthrough();
 
-// ---------------------------------------------------------------------------
-// Collection entry schema
-// ---------------------------------------------------------------------------
+// --- Collection entry schema
 
 /**
  * Discriminated union of all possible dbt node types in the content collection.

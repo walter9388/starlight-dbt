@@ -26,7 +26,6 @@ export type ManifestV12 = z.infer<typeof dbtManifestSchema>;
 export type ManifestV12Metadata = ManifestV12['metadata'];
 export type ManifestV12Node = ManifestV12['nodes'][string];
 
-// ---------------------------------------------------------------------------
 // Per-resource-type node types, derived from the generated schema.
 //
 // Nodes in the `nodes` dict use a discriminated union with z.literal()
@@ -35,7 +34,6 @@ export type ManifestV12Node = ManifestV12['nodes'][string];
 //
 // Nodes in separate top-level dicts (sources, macros, etc.) are typed directly
 // via index access, since those dicts are plain records, not discriminated unions.
-// ---------------------------------------------------------------------------
 
 // From the `nodes` discriminated union
 export type ManifestModelNode = Extract<ManifestV12Node, { resource_type: 'model' }>;

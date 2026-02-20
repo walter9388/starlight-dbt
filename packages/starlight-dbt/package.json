@@ -27,6 +27,7 @@
   "types": "./index.ts",
   "files": [
     "index.ts",
+    "types.ts",
     "loaders.ts",
     "virtual.d.ts",
     "components",
@@ -37,7 +38,7 @@
     ".": "./index.ts",
     "./components": "./components.ts",
     "./loaders": "./loaders.ts",
-    "./types": "./lib/service/types.ts",
+    "./types": "./types.ts",
     "./components/DbtSidebar.astro": "./components/DbtSidebar.astro"
   },
   "peerDependencies": {

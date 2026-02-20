@@ -9,7 +9,7 @@ import { getOrInitDbtService } from '../../lib/manager';
 import { getDbtSidebar, getSidebarEntryMeta, resolveDbtSidebar } from '../../lib/utils/sidebar';
 
 import type { DbtService } from '../../lib/service/types';
-import type { SidebarEntry, SidebarGroup, SidebarLink } from '../../lib/types';
+import type { SidebarEntry, SidebarGroup, SidebarLink } from '../../lib/utils/sidebar';
 
 // Mock the external modules
 vi.mock('node:fs/promises');

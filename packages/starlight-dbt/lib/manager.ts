@@ -3,8 +3,7 @@ import path from 'node:path';
 
 import { createDbtService } from './service/project';
 
-import type { DbtService } from './service/types';
-import type { JsonInput, DbtArtifacts, DbtSource } from './types';
+import type { DbtArtifacts, DbtService, DbtSource, JsonInput } from './service/types';
 
 // Memory Singleton to prevent double-processing during a single build
 const SERVICE_CACHE = new Map<string, DbtService>();

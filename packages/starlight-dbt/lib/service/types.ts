@@ -1,5 +1,16 @@
 import type { DbtCatalog, DbtCatalogTable } from '../schemas/catalog';
-import type { ManifestColumnNode } from '../schemas/manifest';
+import type {
+	ManifestColumnNode,
+	ManifestV12Metadata,
+	ManifestV12Node,
+	ManifestSourceNode,
+	ManifestMacroNode,
+	ManifestExposureNode,
+	ManifestMetricNode,
+	ManifestSemanticModelNode,
+	ManifestSavedQueryNode,
+	ManifestUnitTestNode,
+} from '../schemas/manifest';
 export type { ManifestColumnNode };
 
 /**
@@ -25,75 +36,57 @@ export interface TestInfo {
 	fk_model?: unknown;
 }
 
-// ---------------------------------------------------------------------------
-// Manifest node interfaces — replaces the former @yu-iskw/dbt-artifacts-parser imports
-// ---------------------------------------------------------------------------
+// --- Manifest node types — derived from generated Zod schemas
+
+/** Union of all dbt manifest resource node types from the generated schema. */
+type AnyResourceNode =
+	| ManifestV12Node
+	| ManifestSourceNode
+	| ManifestMacroNode
+	| ManifestExposureNode
+	| ManifestMetricNode
+	| ManifestSemanticModelNode
+	| ManifestSavedQueryNode
+	| ManifestUnitTestNode;
+
+/** Extracts all possible keys across all members of a union. */
+type AllKeysOf<T> = T extends unknown ? keyof T : never;
 
 /**
- * Represents any node from the manifest `nodes` dict.
- *
- * All location and resource-type-specific fields are declared as optional to
- * accommodate the many resource types (model, seed, snapshot, test, hook, etc.).
- * Extra artifact properties not declared here exist at runtime via the Zod
- * passthrough parser, but are not reflected in this TypeScript type.
+ * For a given key K, extracts the value type from any union member that has K.
+ * Members without K contribute `never` (which drops out of the union).
  */
-export interface ManifestNode {
+type ExtractProp<T, K extends PropertyKey> = T extends unknown
+	? K extends keyof T
+		? T[K]
+		: never
+	: never;
+
+/** Flattens a union of object types into a single object with all fields optional. */
+type FlattenUnion<T> = {
+	[K in AllKeysOf<T>]?: ExtractProp<T, K>;
+};
+
+/**
+ * Flat convenience type for any dbt manifest node.
+ *
+ * Derived from the generated Zod schema types. Common fields are required;
+ * all resource-type-specific fields are optional. Use the precise per-resource
+ * types from `schemas/manifest.ts` for fully-typed access.
+ */
+export type ManifestNode = {
 	unique_id: string;
 	name: string;
 	resource_type: string;
 	package_name: string;
 	original_file_path: string;
 	fqn: string[];
-	description?: string | null;
-	tags?: string[];
-	docs?: { show?: boolean };
-	meta?: Record<string, unknown>;
-	columns?: Record<string, ManifestColumnNode>;
-	depends_on?: { nodes?: string[]; macros?: string[] };
 	/** Human-readable display label — augmented by buildProject. */
 	label?: string;
-	// Location fields (model, seed, snapshot, source)
-	database?: string | null;
-	schema?: string | null;
-	alias?: string | null;
-	identifier?: string | null;
-	// Config block (model, seed, snapshot, etc.)
-	config?: { materialized?: string };
-	// Model-specific
-	group?: string | null;
-	access?: 'private' | 'protected' | 'public';
-	version?: number | string | null;
-	raw_code?: string | null;
-	compiled_code?: string | null;
-	refs?: Array<{ name: string }>;
-	// Source-specific
-	source_name?: string;
-	source_description?: string | null;
-	// Exposure-specific
-	type?: string;
-	// Test-specific
-	test_metadata?: {
-		name: string;
-		namespace?: string | null;
-		kwargs?: Record<string, unknown>;
-	};
-	column_name?: string | null;
-	// Macro fields (augmented)
-	macro_sql?: string;
-	is_adapter_macro?: boolean;
-	is_adapter_macro_impl?: boolean;
-	impls?: Record<string, string>;
-}
-
-export interface ManifestMetadata {
-	dbt_schema_version?: string;
-	dbt_version?: string;
-	generated_at?: string;
-	invocation_id?: string | null;
-	project_name?: string | null;
-	adapter_type?: string | null;
-	quoting?: Record<string, unknown> | null;
-}
+} & Omit<
+	FlattenUnion<AnyResourceNode>,
+	'unique_id' | 'name' | 'resource_type' | 'package_name' | 'original_file_path' | 'fqn' | 'label'
+>;
 
 /**
  * Represents a source entry from the manifest `sources` dict, including the
@@ -156,9 +149,7 @@ export type ManifestMacro = ManifestNode & {
 
 export type ManifestMacros = Record<string, ManifestMacro>;
 
-// ---------------------------------------------------------------------------
-// Augmented types (post-buildProject)
-// ---------------------------------------------------------------------------
+// --- Augmented types (post-buildProject)
 
 export type AugmentedMacro = ManifestMacro & {
 	impls?: Record<string, string>;
@@ -186,7 +177,7 @@ export type AugmentedColumnNode = Omit<ManifestNode, 'columns'> & {
  * resolve correctly.
  */
 export interface ManifestArtifact {
-	metadata: ManifestMetadata;
+	metadata: ManifestV12Metadata;
 	nodes: Record<string, ManifestNode>;
 	sources: Record<string, ManifestSource>;
 	macros: Record<string, ManifestMacro>;
@@ -213,9 +204,7 @@ export type AugmentedManifestArtifact = Omit<ManifestArtifact, 'nodes'> & {
 	unit_tests: Record<string, ManifestUnitTest>;
 };
 
-// ---------------------------------------------------------------------------
-// Catalog types — derived from generated Zod schema (no index signature)
-// ---------------------------------------------------------------------------
+// --- Catalog types — derived from generated Zod schema (no index signature)
 
 /**
  * The raw dbt catalog v1 artifact as returned by parseDbtCatalog.
@@ -236,9 +225,7 @@ export type AugmentedCatalogArtifact = CatalogArtifact & {
 	nodes: Record<string, CatalogNode | CatalogSource>;
 };
 
-// ---------------------------------------------------------------------------
-// Combined project type
-// ---------------------------------------------------------------------------
+// --- Combined project type
 
 export type Project = AugmentedManifestArtifact &
 	AugmentedCatalogArtifact & { searchable?: (AugmentedColumnNode | AugmentedMacros[string])[] };
@@ -273,6 +260,19 @@ export interface DbtArtifacts {
 	catalog: Record<string, unknown>;
 }
 
+/**
+ * Input accepted by artifact loaders.
+ *
+ * - A parsed JSON object
+ * - A file path pointing to a JSON file
+ */
+export type JsonInput = string | Record<string, unknown>;
+
+export type DbtSource =
+	| { type: 'file'; manifest: string; catalog: string }
+	| { type: 'http'; manifest: string; catalog: string }
+	| { type: 's3'; bucket: string; region: string; manifestKey: string; catalogKey: string };
+
 export interface DbtService {
 	project: Project;
 	tree: {
@@ -300,9 +300,7 @@ export interface DbtService {
 	populate_node_map: () => void;
 }
 
-// ---------------------------------------------------------------------------
-// Per-dict value types (used in tree builders and elsewhere)
-// ---------------------------------------------------------------------------
+// --- Per-dict value types (used in tree builders and elsewhere)
 
 type ValueOf<T> = T[keyof T];
 export type NodeValues = ValueOf<Project['nodes']>;
@@ -314,9 +312,7 @@ export type SavedQueryValues = ValueOf<Project['saved_queries']>;
 export type MacroValues = ValueOf<Project['macros']>;
 export type UnitTestValues = ValueOf<Project['unit_tests']>;
 
-// ---------------------------------------------------------------------------
 // Tree types
-// ---------------------------------------------------------------------------
 
 export type TreeNodeType =
 	| 'source'

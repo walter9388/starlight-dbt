@@ -3,10 +3,10 @@ import path from 'node:path';
 import { config as starlightDbtConfig } from 'virtual:starlight-dbt/config';
 
 import { getOrInitDbtService } from './lib/manager';
+import { dbtCollectionSchema } from './lib/schemas/collection';
 
 import type { Loader } from 'astro/loaders';
 
-import { dbtCollectionSchema } from './lib/schemas/collection';
 export type { DbtCollectionEntry, DbtCollectionNode } from './lib/schemas/collection';
 
 export function dbtLoader(): Loader {
