@@ -87,5 +87,5 @@ export type CatalogV1Stats = z.infer<typeof catalogStatsSchema>;
 // Re-export generated catalog types for use in types.ts.
 // DbtCatalog is inferred from .strict() schemas so it has no index signature
 // — safe to use in TypeScript intersections without producing `never`.
-export type { DbtCatalog } from './catalog_v1';
-export type DbtCatalogTable = import('./catalog_v1').DbtCatalog['nodes'][string];
+export type { DbtCatalog } from './generated/catalog_v1';
+export type DbtCatalogTable = import('./generated/catalog_v1').DbtCatalog['nodes'][string];

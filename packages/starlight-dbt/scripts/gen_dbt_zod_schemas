@@ -7,7 +7,7 @@ ROOT_DIR=$(dirname "$SCRIPT_DIR")
 
 # Configuration
 TOOL_VERSION="2.7.0"
-OUTPUT_DIR_NAME="lib/schemas"
+OUTPUT_DIR_NAME="lib/schemas/generated"
 OUTPUT_DIR="$ROOT_DIR/$OUTPUT_DIR_NAME"
 
 # Define schemas in the format: "filename|variableName|typeName|url"

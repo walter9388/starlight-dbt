@@ -152,6 +152,6 @@ export type ManifestV12Node = z.infer<typeof baseManifestNodeSchema>;
 // The generated column schema uses .catchall(z.any()), so the inferred type
 // includes [k: string]: any, which allows passthrough fields (e.g. custom
 // fixture fields like `info`) and avoids cast failures in intersections.
-import type { DbtManifest } from './manifest_v12';
+import type { DbtManifest } from './generated/manifest_v12';
 type _ModelNode = Extract<DbtManifest['nodes'][string], { resource_type: 'model' }>;
 export type ManifestColumnNode = NonNullable<_ModelNode['columns']>[string];
