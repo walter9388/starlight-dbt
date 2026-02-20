@@ -137,6 +137,8 @@ describe('parsedCatalogV1Schema', () => {
 
 	it('rejects a catalog with no schema version', () => {
 		const noVersion = { ...minimalV1, metadata: {} };
-		expect(() => parsedCatalogV1Schema.parse(noVersion)).toThrow('Only dbt catalog v1 is supported');
+		expect(() => parsedCatalogV1Schema.parse(noVersion)).toThrow(
+			'Only dbt catalog v1 is supported'
+		);
 	});
 });

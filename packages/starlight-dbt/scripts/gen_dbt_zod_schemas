@@ -44,8 +44,14 @@ EOF
 		--type "$TYPE_NAME" \
 		--withJsdocs \
 		--noImport >>"$OUTPUT_DIR/$FILE_NAME.ts"
+	GENERATE_EXIT=$?
 
-	if [ $? -eq 0 ]; then
+	# Remove .strict() so schemas use Zod's default strip behaviour (silently drop
+	# unknown fields) instead of rejecting them. This keeps generated schemas
+	# forward-compatible with future dbt fields added within the same spec version.
+	sed -i 's/\.strict()//g' "$OUTPUT_DIR/$FILE_NAME.ts"
+
+	if [ $GENERATE_EXIT -eq 0 ]; then
 		echo "Completed: $OUTPUT_DIR/$FILE_NAME.ts"
 	else
 		echo "Failed to process $FILE_NAME"

@@ -10,7 +10,11 @@ const JAFFLE_MANIFEST = path.resolve(
 	'../../examples/jaffle-shop/src/content/dbt/jaffle_shop/manifest.json'
 );
 
-/** Minimal valid manifest v12 fixture. */
+/**
+ * Minimal valid manifest v12 fixture.
+ * All fields required by the generated schema (from the dbt JSON schema spec) must be present.
+ * Fields that the spec marks as nullable can be supplied as null.
+ */
 const minimalV12 = {
 	metadata: {
 		dbt_schema_version: 'https://schemas.getdbt.com/dbt/manifest/v12.json',
@@ -23,6 +27,13 @@ const minimalV12 = {
 	semantic_models: {},
 	saved_queries: {},
 	unit_tests: {},
+	docs: {},
+	groups: {},
+	selectors: {},
+	disabled: null,
+	parent_map: null,
+	child_map: null,
+	group_map: null,
 };
 
 describe('manifestV12Schema', () => {
@@ -33,31 +44,11 @@ describe('manifestV12Schema', () => {
 		expect(result.sources).toEqual({});
 	});
 
-	it('passes through unknown top-level fields', () => {
+	it('strips unknown top-level fields', () => {
 		const withExtra = { ...minimalV12, some_future_field: 'value' };
 		const result = manifestV12Schema.parse(withExtra);
-		expect((result as Record<string, unknown>).some_future_field).toBe('value');
-	});
-
-	it('passes through unknown node fields', () => {
-		const withNode = {
-			...minimalV12,
-			nodes: {
-				'model.pkg.my_model': {
-					unique_id: 'model.pkg.my_model',
-					name: 'my_model',
-					resource_type: 'model',
-					package_name: 'pkg',
-					original_file_path: 'models/my_model.sql',
-					fqn: ['pkg', 'my_model'],
-					future_field: 'hello',
-				},
-			},
-		};
-		const result = manifestV12Schema.parse(withNode);
-		const node = result.nodes['model.pkg.my_model'];
-		expect(node?.unique_id).toBe('model.pkg.my_model');
-		expect((node as Record<string, unknown>).future_field).toBe('hello');
+		// Strip mode: unknown fields are silently dropped, not preserved
+		expect((result as Record<string, unknown>).some_future_field).toBeUndefined();
 	});
 
 	it('accepts a real jaffle-shop manifest', () => {
@@ -65,24 +56,6 @@ describe('manifestV12Schema', () => {
 		const result = manifestV12Schema.parse(raw);
 		expect(Object.keys(result.nodes).length).toBeGreaterThan(0);
 		expect(result.metadata.project_name).toBeTruthy();
-	});
-
-	it('does not throw on missing optional fields', () => {
-		// groups, docs, selectors are optional
-		const withoutOptionals = {
-			metadata: {
-				dbt_schema_version: 'https://schemas.getdbt.com/dbt/manifest/v12.json',
-			},
-			nodes: {},
-			sources: {},
-			macros: {},
-			exposures: {},
-			metrics: {},
-			semantic_models: {},
-			saved_queries: {},
-			unit_tests: {},
-		};
-		expect(() => manifestV12Schema.parse(withoutOptionals)).not.toThrow();
 	});
 });
 
@@ -107,6 +80,8 @@ describe('parsedManifestV12Schema', () => {
 			...minimalV12,
 			metadata: {},
 		};
-		expect(() => parsedManifestV12Schema.parse(noVersion)).toThrow('Only dbt manifest v12 is supported');
+		expect(() => parsedManifestV12Schema.parse(noVersion)).toThrow(
+			'Only dbt manifest v12 is supported'
+		);
 	});
 });

@@ -220,9 +220,10 @@ export type AugmentedManifestArtifact = Omit<ManifestArtifact, 'nodes'> & {
 /**
  * The raw dbt catalog v1 artifact as returned by parseDbtCatalog.
  *
- * Aliased from the generated DbtCatalog type whose .strict() schemas produce
- * no index signature — safe to use in TypeScript intersections without
- * causing AugmentedCatalogArtifact or Project properties to resolve to `never`.
+ * Aliased from the generated DbtCatalog type, which has no index signature
+ * (no `.catchall()` or `.passthrough()`), making it safe to use in TypeScript
+ * intersections without causing AugmentedCatalogArtifact or Project properties
+ * to resolve to `never`.
  */
 export type CatalogArtifact = DbtCatalog;
 

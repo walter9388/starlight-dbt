@@ -17,6 +17,12 @@ describe('parseDbtManifest', () => {
 			semantic_models: {},
 			saved_queries: {},
 			unit_tests: {},
+			docs: {},
+			selectors: {},
+			disabled: null,
+			parent_map: null,
+			child_map: null,
+			group_map: null,
 		};
 
 		expect(parseDbtManifest(manifestV12)).toBeDefined();
