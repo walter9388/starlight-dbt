@@ -1,5 +1,11 @@
 # starlight-dbt
 
+## 0.0.3
+
+### Patch Changes
+
+- 5cc8a2f: Improved consistency of internal schemas and types (including generating zod schemas directly from dbt artifact JSON-schemas)
+
 ## 0.0.2
 
 ### Patch Changes
