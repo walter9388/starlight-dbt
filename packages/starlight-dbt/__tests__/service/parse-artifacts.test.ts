@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { parseDbtManifest, parseDbtCatalog } from '../../lib/service/parse-artifacts';
 
 describe('parseDbtManifest', () => {
-	it('parses a valid manifest v12', async () => {
+	it('parses a valid manifest v12', () => {
 		const manifestV12 = {
 			metadata: {
 				dbt_schema_version: 'https://schemas.getdbt.com/dbt/manifest/v12.json',
@@ -15,12 +15,20 @@ describe('parseDbtManifest', () => {
 			metrics: {},
 			groups: {},
 			semantic_models: {},
+			saved_queries: {},
+			unit_tests: {},
+			docs: {},
+			selectors: {},
+			disabled: null,
+			parent_map: null,
+			child_map: null,
+			group_map: null,
 		};
 
-		await expect(parseDbtManifest(manifestV12)).resolves.toBeDefined();
+		expect(parseDbtManifest(manifestV12)).toBeDefined();
 	});
 
-	it('fails when parsing manifest v11', async () => {
+	it('fails when parsing manifest v11', () => {
 		const manifestV11 = {
 			metadata: {
 				dbt_schema_version: 'https://schemas.getdbt.com/dbt/manifest/v11.json',
@@ -30,12 +38,12 @@ describe('parseDbtManifest', () => {
 			macros: {},
 		};
 
-		await expect(parseDbtManifest(manifestV11)).rejects.toThrow();
+		expect(() => parseDbtManifest(manifestV11)).toThrow();
 	});
 });
 
 describe('parseDbtCatalog', () => {
-	it('parses a valid catalog v1', async () => {
+	it('parses a valid catalog v1', () => {
 		const catalogV1 = {
 			metadata: {
 				dbt_schema_version: 'https://schemas.getdbt.com/dbt/catalog/v1.json',
@@ -44,10 +52,10 @@ describe('parseDbtCatalog', () => {
 			sources: {},
 		};
 
-		await expect(parseDbtCatalog(catalogV1)).resolves.toBeDefined();
+		expect(parseDbtCatalog(catalogV1)).toBeDefined();
 	});
 
-	it('fails when parsing an unsupported catalog version', async () => {
+	it('fails when parsing an unsupported catalog version', () => {
 		const catalogV2 = {
 			metadata: {
 				dbt_schema_version: 'https://schemas.getdbt.com/dbt/catalog/v2.json',
@@ -56,6 +64,6 @@ describe('parseDbtCatalog', () => {
 			sources: {},
 		};
 
-		await expect(parseDbtCatalog(catalogV2)).rejects.toThrow();
+		expect(() => parseDbtCatalog(catalogV2)).toThrow();
 	});
 });

@@ -62,8 +62,8 @@ export class DbtServiceImpl implements DbtService {
 	 * This must be called before `build()` or `populate_node_map()`.
 	 */
 	async init(): Promise<void> {
-		this.files.manifest = await parseDbtManifest(this.manifestInput);
-		this.files.catalog = await parseDbtCatalog(this.catalogInput);
+		this.files.manifest = parseDbtManifest(this.manifestInput);
+		this.files.catalog = parseDbtCatalog(this.catalogInput);
 		this.loaded = true;
 	}
 

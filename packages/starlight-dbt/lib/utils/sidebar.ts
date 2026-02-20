@@ -7,8 +7,17 @@ import { getOrInitDbtService } from '../manager';
 import type { DbtSidebarItem, StarlightDbtOptions } from '../../config';
 import type { LinkHTMLAttributes } from '../../starlight-internals/schemas/sidebar';
 import type { ProjectNode, TreeItem, MacroValues, DbtService } from '../service/types';
-import type { SidebarEntry, SidebarItem } from '../types';
+import type { StarlightRouteData } from '@astrojs/starlight/route-data';
+import type { HookParameters } from '@astrojs/starlight/types';
 import type { AstroConfig, AstroIntegrationLogger } from 'astro';
+
+type StarlightUserConfig = HookParameters<'config:setup'>['config'];
+export type SidebarItem = NonNullable<StarlightUserConfig['sidebar']>[number];
+
+type Sidebar = StarlightRouteData['sidebar'];
+export type SidebarEntry = Sidebar[number];
+export type SidebarLink = Extract<SidebarEntry, { type: 'link' }>;
+export type SidebarGroup = Extract<SidebarEntry, { type: 'group' }>;
 
 /**
  * Build a SidebarItem representing a dbt project tree.

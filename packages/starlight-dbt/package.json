@@ -5,6 +5,7 @@
   "author": "Alex Waldron <walter93@hotmail.co.uk> (https://github.com/walter9388)",
   "type": "module",
   "scripts": {
+    "gen_dbt_zod_schemas": "./scripts/gen_dbt_zod_schemas",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "pnpm test:e2e:chrome",
@@ -26,6 +27,7 @@
   "types": "./index.ts",
   "files": [
     "index.ts",
+    "types.ts",
     "loaders.ts",
     "virtual.d.ts",
     "components",
@@ -36,7 +38,7 @@
     ".": "./index.ts",
     "./components": "./components.ts",
     "./loaders": "./loaders.ts",
-    "./types": "./lib/service/types.ts",
+    "./types": "./types.ts",
     "./components/DbtSidebar.astro": "./components/DbtSidebar.astro"
   },
   "peerDependencies": {
@@ -49,7 +51,6 @@
     "vitest": "^4.0.16"
   },
   "dependencies": {
-    "@yu-iskw/dbt-artifacts-parser": "0.1.4",
     "deepmerge": "^4.3.1"
   },
   "license": "MIT",

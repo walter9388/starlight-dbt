@@ -71,9 +71,6 @@ importers:
       '@astrojs/starlight':
         specifier: '>=0.30.0'
         version: 0.37.1(astro@5.16.6(@types/node@25.0.3)(jiti@2.6.1)(rollup@4.54.0)(typescript@5.9.3)(yaml@2.8.2))
-      '@yu-iskw/dbt-artifacts-parser':
-        specifier: 0.1.4
-        version: 0.1.4
       deepmerge:
         specifier: ^4.3.1
         version: 4.3.1
@@ -1067,9 +1064,6 @@ packages:
 
   '@vscode/l10n@0.0.18':
     resolution: {integrity: sha512-KYSIHVmslkaCDyw013pphY+d7x1qV8IZupYfeIfzNA+nsaWHbn5uPuQRvdRFsa9zFzGeudPuoGoZ1Op4jrJXIQ==}
-
-  '@yu-iskw/dbt-artifacts-parser@0.1.4':
-    resolution: {integrity: sha512-ukSE5x5OCx9Q3V96ZLXjjAR6tyewrW2/tsexTiH9lscnPQA5IvjS4R00/mFo3dDbGNHYXxDKKdZ+Vwkfe1PZFQ==}
 
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
@@ -4685,8 +4679,6 @@ snapshots:
       vscode-uri: 3.1.0
 
   '@vscode/l10n@0.0.18': {}
-
-  '@yu-iskw/dbt-artifacts-parser@0.1.4': {}
 
   acorn-jsx@5.3.2(acorn@8.15.0):
     dependencies:

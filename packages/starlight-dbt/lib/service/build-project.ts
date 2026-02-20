@@ -16,8 +16,6 @@ import { cleanProjectMacros, incorporate_catalog, getQuoteChar } from './utils';
 import type {
 	AugmentedMacros,
 	AugmentedColumnNode,
-	ManifestArtifact,
-	ManifestNode,
 	Project,
 	DbtService,
 	TestInfo,
@@ -46,7 +44,7 @@ import type {
  */
 export const buildProject = function (service: DbtService) {
 	// Set node labels (temporarily narrow to ManifestArtifact nodes)
-	Object.values(service.files.manifest.nodes as Record<string, ManifestNode>).forEach((node) => {
+	Object.values(service.files.manifest.nodes).forEach((node) => {
 		node.label =
 			node.resource_type === 'model' && node.version != null
 				? `${node.name}_v${node.version}`
@@ -99,7 +97,7 @@ export const buildProject = function (service: DbtService) {
 	service.files.manifest.macros = macros;
 
 	const project = incorporate_catalog(
-		service.files.manifest as ManifestArtifact,
+		service.files.manifest,
 		service.files.catalog
 	);
 
@@ -110,9 +108,8 @@ export const buildProject = function (service: DbtService) {
 	/* ---- tests ---- */
 	const tests = models.filter((n) => n.resource_type === 'test');
 	tests.forEach((test) => {
-		if (!('test_metadata' in test)) return;
-
 		const { test_metadata } = test;
+		if (!test_metadata) return;
 
 		const test_name = test_metadata.namespace
 			? `${test_metadata.namespace}.${test_metadata.name}`
@@ -151,7 +148,8 @@ export const buildProject = function (service: DbtService) {
 		}
 
 		/* ---- attach tests to columns ---- */
-		const depends_on = test.depends_on?.nodes ?? [];
+		const dep = test.depends_on;
+		const depends_on = (dep && 'nodes' in dep ? dep.nodes : undefined) ?? [];
 		const test_column =
 			test.column_name ||
 			(test_metadata.kwargs?.column_name as string) ||

@@ -3,12 +3,16 @@ import path from 'node:path';
 import { config as starlightDbtConfig } from 'virtual:starlight-dbt/config';
 
 import { getOrInitDbtService } from './lib/manager';
+import { dbtCollectionSchema } from './lib/schemas/collection';
 
 import type { Loader } from 'astro/loaders';
+
+export type { DbtCollectionEntry, DbtCollectionNode } from './lib/schemas/collection';
 
 export function dbtLoader(): Loader {
 	return {
 		name: 'dbt-loader',
+		schema: dbtCollectionSchema,
 		load: async ({ store, logger, parseData, config: astroConfig }) => {
 			if (starlightDbtConfig._projects.length === 0) {
 				logger.warn('No dbt projects found to load.');

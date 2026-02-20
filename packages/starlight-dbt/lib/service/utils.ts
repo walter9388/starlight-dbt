@@ -2,13 +2,7 @@
 
 import merge from 'deepmerge';
 
-import type {
-	CatalogArtifact,
-	ManifestArtifact,
-	ManifestMetadata,
-	AugmentedMacro,
-	AugmentedMacros,
-} from './types';
+import type { CatalogArtifact, ManifestArtifact, AugmentedMacro, AugmentedMacros } from './types';
 
 /**
  * Consolidate adapter macros by grouping them and marking implementations per adapter.
@@ -188,7 +182,7 @@ export function incorporate_catalog(manifest: ManifestArtifact, catalog: Catalog
  * @returns The quote character to use for identifiers: '`' for backtick-style
  * adapters, otherwise '"' (double quote).
  */
-export function getQuoteChar(project_metadata: ManifestMetadata): string {
+export function getQuoteChar(project_metadata: { adapter_type?: string | null }): string {
 	const backtickDatabases = ['bigquery', 'spark', 'databricks'];
 	const adapter_type = project_metadata?.adapter_type || '';
 	return backtickDatabases.includes(adapter_type) ? '`' : '"';

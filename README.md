@@ -20,10 +20,12 @@ Beautiful, customisable, high-performance dbt docs using Starlight (Astro)
   - [x] Make sure all other things pass through (e.g. badges, attrs, etc.) in config
 - [x] Add multiple dbt projects / packages?
 - [ ] Improve internal typing
-  - [ ] zod
-  - [ ] redefine a lot of the manifest/catalog schema types explicitly
+  - [x] zod
+  - [x] redefine a lot of the manifest/catalog schema types explicitly
   - [ ] make catalog optional
   - [ ] get the typing on the virtual model to work (i.e. `virtual:dbt-data`)
+  - [x] Use zod in parsing layer instead of 3rd party libraries
+  - [ ] Use zod in transformation layer
 - [ ] Make `DbtPageTemplate.astro` work well.
 - [ ] improve test coverage on lib (unit testing)
 - [ ] sort out cicd (formatting, linting, testing)
