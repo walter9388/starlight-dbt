@@ -17,21 +17,34 @@ const testInfoSchema = z.object({
 
 /**
  * Schema for a column entry with attached tests (post-buildProject augmentation).
+ *
+ * Manifest fields (name, description, data_type, meta, tags) are declared for
+ * typed access. Catalog-derived fields (type, index, comment) are declared
+ * explicitly to avoid requiring .passthrough() on every column. The `tests`
+ * field is augmented by buildProject and not present in the raw manifest.
  */
-const augmentedColumnSchema = z
-	.object({
-		name: z.string(),
-		description: z.string().nullable().optional(),
-		data_type: z.string().nullable().optional(),
-		meta: z.record(z.unknown()).optional(),
-		tags: z.array(z.string()).optional(),
-		tests: z.array(testInfoSchema).optional(),
-	})
-	.passthrough();
+const augmentedColumnSchema = z.object({
+	name: z.string(),
+	description: z.string().nullable().optional(),
+	data_type: z.string().nullable().optional(),
+	meta: z.record(z.unknown()).optional(),
+	tags: z.array(z.string()).optional(),
+	tests: z.array(testInfoSchema).optional(),
+	// catalog-derived column fields (incorporated from catalog.json by incorporate_catalog)
+	type: z.string().optional(),
+	index: z.number().optional(),
+	comment: z.string().nullable().optional(),
+});
 
 const columnsSchema = z.record(augmentedColumnSchema).optional();
 
-/** Fields shared across all node types in the collection. */
+/**
+ * Fields shared across all node types in the collection.
+ *
+ * Only the fields that are accessed by name in UI code or serve as
+ * discriminants/identifiers are declared here. All remaining manifest and
+ * catalog fields pass through via `.passthrough()` on each node schema.
+ */
 const baseFields = {
 	unique_id: z.string(),
 	name: z.string(),
@@ -39,7 +52,6 @@ const baseFields = {
 	original_file_path: z.string(),
 	description: z.string().nullable().optional(),
 	tags: z.array(z.string()).optional(),
-	docs: z.object({ show: z.boolean().optional() }).passthrough().optional(),
 	meta: z.record(z.unknown()).optional(),
 	/** Human-readable display label — augmented by buildProject. */
 	label: z.string().optional(),
@@ -47,6 +59,16 @@ const baseFields = {
 
 // ---------------------------------------------------------------------------
 // Per-resource-type node schemas
+//
+// Each schema declares only the resource_type discriminant, shared baseFields,
+// and any fields that are either:
+//   (a) augmented by buildProject (e.g. label, tests, impls), or
+//   (b) critical typed fields unique to the node type (e.g. source_name, macro_sql).
+//
+// All remaining manifest fields and catalog-merged fields (stats, etc.) are
+// accepted via .passthrough() without being declared in the TypeScript type.
+// Use ManifestModelNode, ManifestSourceNode, etc. from schemas/manifest.ts
+// for fully-typed access to manifest fields.
 // ---------------------------------------------------------------------------
 
 /**
@@ -56,22 +78,7 @@ export const collectionModelNodeSchema = z
 	.object({
 		...baseFields,
 		resource_type: z.literal('model'),
-		database: z.string().nullable().optional(),
-		schema: z.string().optional(),
-		alias: z.string().optional(),
-		identifier: z.string().optional(),
-		group: z.string().nullable().optional(),
-		access: z.enum(['private', 'protected', 'public']).optional(),
-		version: z.union([z.number(), z.string()]).nullable().optional(),
-		config: z.object({ materialized: z.string().optional() }).passthrough().optional(),
 		columns: columnsSchema,
-		raw_code: z.string().nullable().optional(),
-		compiled_code: z.string().nullable().optional(),
-		refs: z.array(z.object({ name: z.string() }).passthrough()).optional(),
-		depends_on: z
-			.object({ nodes: z.array(z.string()).optional() })
-			.passthrough()
-			.optional(),
 	})
 	.passthrough();
 
@@ -82,11 +89,6 @@ export const collectionSeedNodeSchema = z
 	.object({
 		...baseFields,
 		resource_type: z.literal('seed'),
-		database: z.string().nullable().optional(),
-		schema: z.string().optional(),
-		alias: z.string().optional(),
-		identifier: z.string().optional(),
-		config: z.object({ materialized: z.string().optional() }).passthrough().optional(),
 		columns: columnsSchema,
 	})
 	.passthrough();
@@ -99,8 +101,6 @@ export const collectionAnalysisNodeSchema = z
 		...baseFields,
 		resource_type: z.literal('analysis'),
 		columns: columnsSchema,
-		raw_code: z.string().nullable().optional(),
-		compiled_code: z.string().nullable().optional(),
 	})
 	.passthrough();
 
@@ -111,14 +111,7 @@ export const collectionSnapshotNodeSchema = z
 	.object({
 		...baseFields,
 		resource_type: z.literal('snapshot'),
-		database: z.string().nullable().optional(),
-		schema: z.string().optional(),
-		alias: z.string().optional(),
-		identifier: z.string().optional(),
-		config: z.object({ materialized: z.string().optional() }).passthrough().optional(),
 		columns: columnsSchema,
-		raw_code: z.string().nullable().optional(),
-		compiled_code: z.string().nullable().optional(),
 	})
 	.passthrough();
 
@@ -132,31 +125,17 @@ export const collectionSourceNodeSchema = z
 		...baseFields,
 		resource_type: z.literal('source'),
 		source_name: z.string(),
-		source_description: z.string().nullable().optional(),
-		database: z.string().nullable().optional(),
-		schema: z.string().optional(),
-		identifier: z.string().optional(),
 		columns: columnsSchema,
-		loader: z.string().optional(),
 	})
 	.passthrough();
 
 /**
  * Schema for exposure nodes (resource_type: 'exposure').
- *
- * Exposures have a `type` field (e.g., 'dashboard', 'report') used for grouping.
  */
 export const collectionExposureNodeSchema = z
 	.object({
 		...baseFields,
 		resource_type: z.literal('exposure'),
-		type: z.string().optional(),
-		owner: z.record(z.unknown()).optional(),
-		refs: z.array(z.object({ name: z.string() }).passthrough()).optional(),
-		depends_on: z
-			.object({ nodes: z.array(z.string()).optional() })
-			.passthrough()
-			.optional(),
 	})
 	.passthrough();
 
@@ -197,7 +176,6 @@ export const collectionUnitTestNodeSchema = z
 	.object({
 		...baseFields,
 		resource_type: z.literal('unit_test'),
-		model: z.string().optional(),
 	})
 	.passthrough();
 
@@ -230,11 +208,6 @@ export const collectionSingularTestNodeSchema = z
 	.object({
 		...baseFields,
 		resource_type: z.literal('test'),
-		column_name: z.string().nullable().optional(),
-		depends_on: z
-			.object({ nodes: z.array(z.string()).optional() })
-			.passthrough()
-			.optional(),
 	})
 	.passthrough();
 
